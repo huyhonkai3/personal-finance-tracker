@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema(
     // Tên người dùng
     name: {
       type: String,
-      require: [true, "Vui lòng nhập tên"], // Custom error message rõ ràng hơn là chỉ 'required: true'
+      required: [true, "Vui lòng nhập tên"], // Custom error message rõ ràng hơn là chỉ 'required: true'
       trim: true, // Tự động xóa khoảng trắng thừa ở đầu/cuối chuỗi
     },
     // Email - bắt buộc & duy nhất

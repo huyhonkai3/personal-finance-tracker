@@ -20,7 +20,6 @@ const PORT = process.env.PORT || 5000;
 connectDB();
 
 // =============== Middleware (Chạy trước mọi Route Handler) ================
-
 // cors(): Cho phép frontend (chạy ở domain/port khác) gọi API này
 // Ví dụ: Frontend chạy ở localhost:3000, Backend ở localhost:5000 -> cần CORS
 app.use(cors());
@@ -37,6 +36,9 @@ if (process.env.NODE_ENV === "development") {
 app.get("/", (req, res) => {
   res.json({ message: "API is running..." });
 });
+// Auth routes: Đăng ký, Đăng nhập
+// Mọi request đến /api/auth/... sẽ được chuyển vào authRoutes để xử lý
+app.use('/api/auth', require('./routes/authRoutes'));
 
 // ========== Global Error Handler Middleware ===========
 // Đây là middleware đặc biệt với 4 tham số (err, req, res, next)
@@ -47,7 +49,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({
     message: err.message || "Lỗi máy chủ nội bộ",
     // Chỉ hiện stack trace trong môi trường development để debug
-    stack: process.env.NODE_ENV === "development" ? err.stackk : undefined,
+    stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
   });
 });
 
@@ -65,8 +67,10 @@ app.listen(PORT, () => {
 // Nếu không xử lý, trong Node.js phiên bản mới, process sẽ tự exit - rất nguy hiểm trên production!
 process.on("unhandledRejection", (reason, promise) => {
   console.error("Unhandled Promise Rejection tại:", promise, "Lý do:", reason);
-  // Tùy chọn: Dừng server một cách graceful thay vì crash đột ngột
-  server.close(() => process.exit(1));
+  // server là biến không tồn tại -> ReferenceError khi crash
+  // app.listen() không trả về biến server, phải dùng process.exit() trực tiếp
+  // Hoặc lưu kết quả app.listen() vào biến nếu muốn graceful shutdown
+  process.exit(1));
 });
 
 // Xử lý Uncaught Exception (lỗi đồng bộ không được catch)

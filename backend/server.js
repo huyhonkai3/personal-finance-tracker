@@ -6,6 +6,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
+const cookieParser = require("cookie-parser");
 
 // Import hàm kết nối từ DB từ module riêng
 const connectDB = require("./config/db");
@@ -22,7 +23,23 @@ connectDB();
 // =============== Middleware (Chạy trước mọi Route Handler) ================
 // cors(): Cho phép frontend (chạy ở domain/port khác) gọi API này
 // Ví dụ: Frontend chạy ở localhost:3000, Backend ở localhost:5000 -> cần CORS
-app.use(cors());
+// credentials: true -> Cho phép trình duyệt gửi kèm cookie trong cross-origin request
+// origin: chỉ định domain frontend được phép gọi (thay vì cho phép tất cả với *)
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http:///localhost:3000",
+    credentials: true, // Bắt buôc phải có nếu dùng cookie với CORS
+  }),
+);
+
+// express.json(): Parse body từ JSON string thành JS object (req.body)
+// Nếu thiếu middlware này, req.body sẽ là undefined
+app.use(express.json);
+
+// cookieParser(): Parse cookie từ request heder thành object (req.cookies)
+// Phải có middlware này để đọc JWT từ cookie trong authMiddleware.js
+// Nếu thiếu, req.cookies sẽ là undefined và mọi route protected đều trả 401
+app.use(cookieParser());
 
 // morgan('dev'): Tự động log mọi HTTP request ra console (method, path, status, thời gian)
 // VD: GET /api/transactions 200 15.234ms
@@ -38,7 +55,7 @@ app.get("/", (req, res) => {
 });
 // Auth routes: Đăng ký, Đăng nhập
 // Mọi request đến /api/auth/... sẽ được chuyển vào authRoutes để xử lý
-app.use('/api/auth', require('./routes/authRoutes'));
+app.use("/api/auth", require("./routes/authRoutes"));
 
 // ========== Global Error Handler Middleware ===========
 // Đây là middleware đặc biệt với 4 tham số (err, req, res, next)
@@ -70,7 +87,7 @@ process.on("unhandledRejection", (reason, promise) => {
   // server là biến không tồn tại -> ReferenceError khi crash
   // app.listen() không trả về biến server, phải dùng process.exit() trực tiếp
   // Hoặc lưu kết quả app.listen() vào biến nếu muốn graceful shutdown
-  process.exit(1));
+  process.exit(1);
 });
 
 // Xử lý Uncaught Exception (lỗi đồng bộ không được catch)

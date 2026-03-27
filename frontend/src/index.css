@@ -1,0 +1,260 @@
+/* =============================
+   index.css - Global Styles & CSS Variables
+   Design System: 'Quiet Wealth'
+   ============================= */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===========================
+   1. CSS CUSTOM PROPERTIES (Design Tokens)
+   Dùng CSS Variables để có thể override ở runtime (dark mode toggle)
+   =========================== */
+@layer base {
+    :root {
+        /* Surfaces */
+        --color-bg: #faf9f7;
+        --color-bg-subtle: #f4f2ee;
+        --color-bg-card: #ffffff;
+        --color-border: #e8e4dd;
+        --color-border-subtle: #f0ede8;
+
+        /* Text */
+        --color-ink: #1a1a1a;
+        --color-ink-2: #6b6860;
+        --color-ink-3: #a8a49e;
+
+        /* Accent Gold */
+        --color-gold: #d4a843;
+        --color-gold-light: #f3e4a0;
+        --color-gold-bg: #a8a49e;
+
+        /* Semantic */
+        --color-income: #3d6b5a;
+        --color-income-bg: #ebf2ef;
+        --color-expense: #8b4a3a;
+        --color-expense-bg: #f5edeb;
+
+        /* Typography */
+        --font-serif: "Playfair Display", Georgia, serif;
+        --font-sans: "DM Sans", system-ui, sans-serif;
+        --font-mono: "DM Mono", "Fira Code", monospace;
+    }
+
+    /* Dark mode - override chỉ các variables cân đổi */
+    .dark {
+        --color-bg: #141414;
+        --color-bg-subtle: #191919;
+        --color-bg-card: #1e1e1e;
+        --color-border: #2a2a2a;
+        --color-border-subtle: #222222;
+
+        --color-ink: #f0ede8;
+        --color-ink-2: #9e9a95;
+        --color-ink-3: #5a5652;
+
+        --color-gold-bg: #1e1a0e;
+        --color-income-bg: #1a2e28;
+        --color-expense-bg: #2e1e1a;
+    }
+}
+
+/* ===========================
+   2. BASE ELEMENT STYLES
+   =========================== */
+@layer base {
+    * {
+        @apply border-[var(--color-border)];
+    }
+
+    html {
+        /* Smooth scroll - UX tinh tế */
+        scroll-behavior: smooth;
+        /* Prevent layout shift khi scrollbar xuất hiện */
+    }
+
+    body {
+        background-color: var(--color-bg);
+        color: var(--color-ink);
+        font-family: var(--font-sans);
+        /* Anti-aliasing: làm chữ mịn hơn trên màn hình Retina */
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        /* font-feature-settings giúp số hiển thị đẹp hơn
+           'tnum' = tabular numbers: các chữ số có cùng width -> cột số thẳng hàng
+           'ss01' = stylistic set - một số font có variant đẹp hơn */
+        font-feature-settings:
+            "tnum" on,
+            "lnum" on;
+        line-height: 1.5;
+    }
+
+    /* Headings dùng font Serif */
+    h1,
+    h2 {
+        font-family: var(--font-serif);
+        letter-spacing: -0.02em;
+    }
+
+    /* Custom scrollbar - tinh tế, không thô */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    ::-web-kit-scrollbar-track {
+        background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: var(--color-border);
+        border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--color-ink-3);
+    }
+}
+
+/* ===========================
+   3. UTILITY CLASSES - Tái sử dụng nhiều lần
+   =========================== */
+@layer components {
+    /* Typography utilities */
+    .text-serif {
+        font-family: var(--font-serif);
+    }
+    .text-mono {
+        font-family: var(--font-mono);
+    }
+
+    /* Con số tiền tệ - định dạng đặc biệt */
+    .amount-display {
+        font-family: var(--font-serif);
+        font-weight: 500;
+        letter-spacing: -0.03em;
+        font-feature-settings: "tnum" on;
+    }
+
+    /* Label nhỏ uppercase - cho metadata, category */
+    .label-caps {
+        font-size: 0.6875rem;
+        font-weight: 500;
+        letter-spacing: 0.1em;
+        text-transform: 0.1em;
+        color: var(--color-ink-3);
+    }
+
+    /* Card cơ bản */
+    .card {
+        background-color: var(--color-bg-card);
+        border: 1px solid var(--color-border);
+        border-radius: 1rem;
+    }
+
+    .card-subtle {
+        background-color: var(--color-bg-subtle);
+        border: 1px solid var(--color-border-subtle);
+        border-radius: 1rem;
+    }
+
+    /* Divider thanh lịch */
+    .divider {
+        height: 1px;
+        background: linear-gradient(
+            to right,
+            transparent,
+            var(--color-border) 20%,
+            var(--color-border) 80%,
+            transparent
+        );
+    }
+
+    /* Input style thống nhất */
+    .input-luxury {
+        width: 100%;
+        background-color: var(--color-bg-subtle);
+        border: 1px solid var(--color-border);
+        border-radius: 0.625rem;
+        padding: 0.75rem 1rem;
+        font-family: var(--font-sans);
+        font-size: 0.9375rem;
+        color: var(--color-ink);
+        transition:
+            border-color 0.2s ease,
+            box-shadow 0.2s ease;
+        outline: none;
+    }
+    .input-luxury::placeholder {
+        color: var(--color-ink-3);
+    }
+    .input-luxury:focus {
+        border-color: var(--color-gold);
+        box-shadow: 0 0 0 3px rgba(212, 168, 67, 0.15);
+    }
+
+    /* Button variants */
+    .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background-color: var(--color-ink);
+        color: var(--color-bg);
+        font-family: var(--font-sans);
+        font-size: 0.9375rem;
+        font-weight: 500;
+        letter-spacing: -0.01em;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.625rem;
+        transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+        cursor: pointer;
+        border: none;
+    }
+    .btn-primary:hover {
+        background-color: #2a2a2a;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(26, 26, 26, 0.15);
+    }
+    .btn-primary:active {
+        transform: translateY(0);
+    }
+
+    .btn-ghost {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background: transparent;
+        color: var(--color-ink-2);
+        font-family: var(--font-sans);
+        font-size: 0.9375rem;
+        font-weight: 400;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.625rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: 1px solid var(--color-border);
+    }
+    .btn-ghost:hover {
+        background-color: var(--color-bg-subtle);
+        color: var(--color-ink);
+    }
+
+    /* Animation delays cho staggered reveal */
+    .delay-100 {
+        animation-delay: 100ms;
+    }
+    .delay-200 {
+        animation-delay: 200ms;
+    }
+    .delay-300 {
+        animation-delay: 300ms;
+    }
+    .delay-400 {
+        animation-delay: 400ms;
+    }
+    .delay-500 {
+        animation-delay: 500ms;
+    }
+    .delay-600 {
+        animation-delay: 600ms;
+    }
+}

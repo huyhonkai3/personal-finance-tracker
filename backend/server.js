@@ -78,7 +78,6 @@ app.listen(PORT, () => {
 });
 
 // ============ Xử lý Unhandled Promise Rejection =============
-// Fresher thường quên xử lý case này!
 // Khi có một Promise bị reject mà không có .catch() nào bắt nó,
 // Node.js sẽ emit sự kiện 'unhandledRejection'.
 // Nếu không xử lý, trong Node.js phiên bản mới, process sẽ tự exit - rất nguy hiểm trên production!

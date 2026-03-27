@@ -87,9 +87,26 @@ function Login() {
       </form>
 
       {/* Link đến Register */}
-      <p style={{ textAlign: 'center', fontSize: '0.9375rem', color: 'var(--color-ink-2)'}}>
+      <p
+        style={{
+          textAlign: "center",
+          fontSize: "0.9375rem",
+          color: "var(--color-ink-2)",
+        }}
+      >
         Don't have an account?
-        <Link to="/register" style={{color: 'var(--color-ink)', fontWeight: 500, textDecoration: 'underline' textUnderlineOffset: '3px', textDecorationColor: 'var(--color-gold)'}}>Create an account</Link>
+        <Link
+          to="/register"
+          style={{
+            color: "var(--color-ink)",
+            fontWeight: 500,
+            textDecoration: "underline",
+            textUnderlineOffset: "3px",
+            textDecorationColor: "var(--color-gold)",
+          }}
+        >
+          Create an account
+        </Link>
       </p>
     </div>
   );

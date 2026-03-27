@@ -337,7 +337,7 @@ function Dashboard() {
         </div>
 
         <div className="mt-2">
-          {MOCK_TRANSACTIONS.MAP((tx) => (
+          {MOCK_TRANSACTIONS.map((tx) => (
             <TransactionRow key={tx.id} tx={tx} />
           ))}
         </div>
@@ -345,3 +345,5 @@ function Dashboard() {
     </div>
   );
 }
+
+export default Dashboard;

@@ -18,11 +18,7 @@ import AuthLayout from "@/layouts/AuthLayout";
 import Dashboard from "@/pages/Dashboard";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
-
-// TODO Ngày 5: Thêm các trang này sau
-// import Transactions from "@/pages/Transactions";
-// import Budget       from "@/pages/Budget";
-// import Categories   from "@/pages/Categories";
+import TestUI from "@/pages/TestUI";
 
 // =============================================
 // Route Guards
@@ -79,10 +75,7 @@ function App() {
           }
         >
           <Route path="/dashboard" element={<Dashboard />} />
-          {/* TODO Ngày 5+: */}
-          {/* <Route path="/transactions"  element={<Transactions />} /> */}
-          {/* <Route path="/budget"        element={<Budget />}       /> */}
-          {/* <Route path="/categories"    element={<Categories />}   /> */}
+          <Route path="/test-ui" element={<TestUI />} />
         </Route>
 
         {/* ===== Fallback Routes ===== */}

@@ -12,36 +12,30 @@
    =========================== */
 @layer base {
     :root {
-        /* Surfaces */
         --color-bg: #faf9f7;
         --color-bg-subtle: #f4f2ee;
         --color-bg-card: #ffffff;
         --color-border: #e8e4dd;
         --color-border-subtle: #f0ede8;
 
-        /* Text */
         --color-ink: #1a1a1a;
         --color-ink-2: #6b6860;
         --color-ink-3: #a8a49e;
 
-        /* Accent Gold */
         --color-gold: #d4a843;
         --color-gold-light: #f3e4a0;
-        --color-gold-bg: #a8a49e;
+        --color-gold-bg: #fdfbf3;
 
-        /* Semantic */
         --color-income: #3d6b5a;
         --color-income-bg: #ebf2ef;
         --color-expense: #8b4a3a;
         --color-expense-bg: #f5edeb;
 
-        /* Typography */
         --font-serif: "Playfair Display", Georgia, serif;
         --font-sans: "DM Sans", system-ui, sans-serif;
         --font-mono: "DM Mono", "Fira Code", monospace;
     }
 
-    /* Dark mode - override chỉ các variables cân đổi */
     .dark {
         --color-bg: #141414;
         --color-bg-subtle: #191919;
@@ -101,7 +95,7 @@
         width: 6px;
         height: 6px;
     }
-    ::-web-kit-scrollbar-track {
+    ::-webkit-scrollbar-track {
         background: transparent;
     }
     ::-webkit-scrollbar-thumb {
@@ -138,7 +132,7 @@
         font-size: 0.6875rem;
         font-weight: 500;
         letter-spacing: 0.1em;
-        text-transform: 0.1em;
+        text-transform: uppercase;
         color: var(--color-ink-3);
     }
 

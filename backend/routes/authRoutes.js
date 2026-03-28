@@ -24,7 +24,7 @@ router.post("/login", loginUser);
 // Protected routes (cần đăng nhập - thêm middleware protect vào giữa) ---
 // Cú pháp: router.METHOD(path, middleware, handler)
 // `protect` chạy trước `logoutUser`, nếu không có token hợp lệ thì chặn lại luôn
-router.post("/logout", protect);
+router.post("/logout", protect, logoutUser);
 router.get("/profile", protect, getUserProfile);
 
 module.exports = router;

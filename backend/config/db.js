@@ -17,7 +17,7 @@ const connectDB = async () => {
     // Nếu kết nối thất bại, in lỗi ra và dừng toàn bộ tiến trình Node.js
     // process.exit(1) nghĩa là thoát với mã lỗi (1 = có lỗi xảy ra)
     // Lý do: Nếu không có DB, server chạy cũng vô nghĩa và sẽ bị crash sau đó
-    console.error(`MongoDB Connection Error: ${error.message}`);
+    console.error(`MongoDB Connection Error: ${err.message}`);
     process.exit(1);
   }
 };

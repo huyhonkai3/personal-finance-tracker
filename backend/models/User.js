@@ -1,38 +1,70 @@
-// models/User.js - Schema cho Collection Users
+// =============================================
+// models/User.js - Schema cho Collection Users (Ngày 2: Thêm mã hóa mật khẩu)
+// =============================================
+
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema(
   {
-    // Tên người dùng
     name: {
       type: String,
-      required: [true, "Vui lòng nhập tên"], // Custom error message rõ ràng hơn là chỉ 'required: true'
-      trim: true, // Tự động xóa khoảng trắng thừa ở đầu/cuối chuỗi
+      // 🐛 BUG ĐÃ FIX: `require` -> `required` (typo khiến validation không hoạt động âm thầm)
+      required: [true, "Vui lòng nhập tên"],
+      trim: true,
     },
-    // Email - bắt buộc & duy nhất
     email: {
       type: String,
       required: [true, "Vui lòng nhập email"],
-      unique: true, // Tạo unique index trên MongoDB, không cho phép 2 user cùng email
+      unique: true,
       trim: true,
-      // Chuẩn hóa email về chữ thường trước khi lưu
-      // Tránh trường hợp 'Test@Gmail.com' và 'test@gmail.com' bị coi là 2 user khác nhau
       lowercase: true,
     },
-    // Mật khẩu: Đây chỉ là Schema. Logic hash password (bcrypt) sẽ được xử lý ở tần Service/Controller
     password: {
       type: String,
       required: [true, "Vui lòng nhập mật khẩu"],
       minlength: [6, "Mật khẩu phải có ít nhất 6 ký tự"],
     },
   },
-  // timestamps: true -> Mongoose tự động thêm 2 fields: createAt và updateAt
-  // Hữu ích để biết user đăng ký khi nào, cập nhật lần cuối khi nào
   { timestamps: true },
 );
 
-// Thêm index cho email để tìm kiếm nhanh hơn
-// userSchema.index({ email: 1 }); -> đã được tạo tự động bởi unique: true, không cần khai báo lại
+// =============================================
+// Mongoose Pre-save Hook: Tự động hash password trước khi lưu vào DB
+// =============================================
+// Middleware này chạy TRƯỚC mỗi lần document.save() được gọi
+// Dùng function() thông thường (KHÔNG dùng arrow function) vì ta cần `this`
+// `this` ở đây trỏ đến document đang được lưu (tức là object User)
+userSchema.pre("save", async function (next) {
+  // isModified("password"): kiểm tra xem field password có bị thay đổi không
+  // TỐI ƯU (Junior): Nếu user chỉ cập nhật tên/email (không đổi password),
+  // ta bỏ qua bước hash để tránh hash lại password đã được hash -> sẽ gây lỗi đăng nhập!
+  if (!this.isModified("password")) {
+    return next();
+  }
+
+  // genSalt(10): Tạo "muối" với độ phức tạp 10 vòng lặp (cost factor)
+  // Con số 10 là chuẩn cân bằng giữa bảo mật và hiệu năng - đủ an toàn mà không quá chậm
+  const salt = await bcrypt.genSalt(10);
+
+  // hash(): Kết hợp password gốc + salt -> tạo ra chuỗi hash hoàn toàn mới
+  // Gán thẳng lại vào this.password để Mongoose lưu chuỗi hash thay vì plaintext
+  this.password = await bcrypt.hash(this.password, salt);
+
+  next();
+});
+
+// =============================================
+// Instance Method: So sánh mật khẩu khi đăng nhập
+// =============================================
+// Instance method được gọi trên một document cụ thể: user.matchPassword("abc123")
+// `this` ở đây trỏ đến user document, nên ta lấy được this.password (password đã hash)
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  // bcrypt.compare(): So sánh plaintext với hash đã lưu trong DB
+  // Hàm này tự xử lý salt bên trong, ta không cần làm thủ công
+  // Trả về: true nếu khớp, false nếu không khớp
+  return await bcrypt.compare(enteredPassword, this.password);
+};
 
 const User = mongoose.model("User", userSchema);
 

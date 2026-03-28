@@ -1,17 +1,55 @@
 // pages/Register.jsx
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
+import { registerApi } from "@/api/authApi";
+import useAuthStore from "@/store/authStore";
 
 function Register() {
+  const navigate = useNavigate();
+  const setCredentials = useAuthStore((state) => state.setCredentials);
+
+  // Form state
   const [form, setForm] = useState({ name: "", email: "", password: "" });
+
+  // UI state
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO ngày 5: Gọi API register + auto-login
-    console.log("Register: ", form);
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const data = await registerApi({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+      });
+      console.log(data);
+
+      // Đăng ký xong -> tự động đăng nhập
+      setCredentials(data, data.token);
+      navigate("/dashboard", { replace: true });
+    } catch (err) {
+      const msg = err?.response?.data?.message;
+
+      if (msg?.toLowerCase().includes("email")) {
+        setError(
+          "Email này đã được đăng ký. Vui lòng dùng email khác hoặc đăng nhập",
+        );
+      } else {
+        setError(
+          msg || "Đăng ký thất bại. Vui lòng kiểm tra tra lại thông tin.",
+        );
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -33,10 +71,28 @@ function Register() {
         </p>
       </div>
 
+      {/* Thông báo lỗi */}
+      {error && (
+        <div
+          role="alert"
+          style={{
+            padding: "0.75rem 1rem",
+            borderRadius: "0.625rem",
+            backgroundColor: "var(--color-expense-bg)",
+            border: "1px solid rgba(139, 74, 58, 0.2)",
+            fontSize: "0.875rem",
+            color: "var(--color-expense)",
+            lineHeight: 1.5,
+          }}
+        >
+          {error}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
           <label className="label-caps" htmlFor="name">
-            Full Name
+            Họ và tên
           </label>
           <input
             id="name"
@@ -47,6 +103,7 @@ function Register() {
             value={form.name}
             onChange={handleChange}
             required
+            disabled={isLoading}
           />
         </div>
         <div className="space-y-1.5">
@@ -62,11 +119,12 @@ function Register() {
             value={form.email}
             onChange={handleChange}
             required
+            disabled={isLoading}
           />
         </div>
         <div className="space-y-1.5">
           <label className="label-caps" htmlFor="password">
-            Password
+            Mật khẩu
           </label>
           <input
             id="password"
@@ -78,10 +136,25 @@ function Register() {
             onChange={handleChange}
             minLength={6}
             required
+            disabled={isLoading}
           />
         </div>
-        <button type="submit" className="btn-primary w-full mt-2">
-          Create account
+        <button
+          type="submit"
+          className="btn-primary w-full mt-2"
+          disabled={isLoading}
+          style={
+            isLoading ? { opacity: 0.75, cursor: "not-allowed" } : undefined
+          }
+        >
+          {isLoading ? (
+            <>
+              <Loader2 size={15} className="animate-spin" />
+              Đang tạo tài khoản...
+            </>
+          ) : (
+            "Tạo tài khoản"
+          )}
         </button>
       </form>
 
@@ -92,7 +165,7 @@ function Register() {
           color: "var(--color-ink-2)",
         }}
       >
-        Already have an account?{" "}
+        Đã có tài khoản{" "}
         <Link
           to="/login"
           style={{
@@ -103,7 +176,7 @@ function Register() {
             textDecorationColor: "var(--color-gold)",
           }}
         >
-          Sign in
+          Đăng nhập
         </Link>
       </p>
     </div>

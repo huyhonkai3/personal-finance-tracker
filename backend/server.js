@@ -27,14 +27,14 @@ connectDB();
 // origin: chỉ định domain frontend được phép gọi (thay vì cho phép tất cả với *)
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http:///localhost:3000",
+    origin: process.env.CLIENT_URL || "http://localhost:3000",
     credentials: true, // Bắt buôc phải có nếu dùng cookie với CORS
   }),
 );
 
 // express.json(): Parse body từ JSON string thành JS object (req.body)
 // Nếu thiếu middlware này, req.body sẽ là undefined
-app.use(express.json);
+app.use(express.json());
 
 // cookieParser(): Parse cookie từ request heder thành object (req.cookies)
 // Phải có middlware này để đọc JWT từ cookie trong authMiddleware.js

@@ -14,17 +14,17 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import TestUI from "@/pages/TestUI";
 
+// ProtectedRoute
+import ProtectedRoute from "@/components/ProtectedRoute";
+
+import useAuthStore from "@/store/authStore";
+
 // =============================================
 // Route Guards
 // =============================================
 const PublicRoute = ({ children }) => {
-  const isAuthenticated = false; // TODO Ngày 7: Thay bằng useAuth()
-  return isAuthenticated ? <Navigate to="/dashboard" replace /> : children;
-};
-
-const PrivateRoute = ({ children }) => {
-  const isAuthenticated = true; // TODO Ngày 7: Thay bằng useAuth()
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
+  const token = useAuthStore((state) => state.token);
+  return token ? <Navigate to="/dashboard" replace /> : children;
 };
 
 // =============================================
@@ -59,20 +59,9 @@ function App() {
           đều đặt làm Route con của Route có element={<MainLayout />}.
           Thêm trang mới chỉ cần thêm <Route> con — không cần sửa MainLayout.
         */}
-        <Route
-          element={
-            <PrivateRoute>
-              <MainLayout />
-            </PrivateRoute>
-          }
-        >
+        <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/test-ui" element={<TestUI />} />
-          {/* TODO Ngày 8+: Thêm các trang sau */}
-          {/* <Route path="/transactions" element={<Transactions />} /> */}
-          {/* <Route path="/budgets"      element={<Budgets />}      /> */}
-          {/* <Route path="/reports"      element={<Reports />}      /> */}
-          {/* <Route path="/settings"     element={<Settings />}     /> */}
         </Route>
 
         {/* ===== Fallback Routes ===== */}

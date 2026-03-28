@@ -75,7 +75,6 @@ const loginUser = async (req, res) => {
   // Sinh token và gắn vào cookie
   generateToken(res, user._id);
 
-  // 🐛 BUG ĐÃ FIX: `res.status(201)` -> `res.status(200)`
   // 201 = Created (tạo resource mới). Đăng nhập là đọc dữ liệu, không tạo mới -> phải là 200 OK
   res.status(200).json({
     _id: user._id,

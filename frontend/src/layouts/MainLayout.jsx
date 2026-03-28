@@ -1,172 +1,227 @@
-/**
- * layouts/MainLayout.jsx - Layout chính với Sidebar
- *
- * Layout dùng CSS Grid để sidebar và main content
- * không phụ thuộc nhau về chiều cao. Sidebar luôn full height.
- */
-import { Outlet, NavLink, useLocation } from "react-router-dom";
-import {
-  LayoutDashboard,
-  ArrowLeftRight,
-  PieChart,
-  Target,
-  Settings,
-  LogOut,
-  TrendingUp,
-} from "lucide-react";
+// =============================================
+// layouts/MainLayout.jsx — Bộ khung layout chính
+// =============================================
+// Đây là "controller" của toàn bộ layout:
+//   - Quản lý state isMobileMenuOpen
+//   - Phân phối state + callback xuống Header và Sidebar
+//   - Xử lý responsive: desktop (sidebar cố định) vs mobile (drawer)
+// <Outlet /> là nơi React Router render các trang con (Dashboard, Transactions, ...)
 
-// Danh sách navigation items - tách ra để dễ thêm/xóa
-const NAV_ITEMS = [
-  { to: "/dashboard", icon: LayoutDashboard, label: "Overview" },
-  { to: "/transactions", icon: ArrowLeftRight, label: "Transactions" },
-  { to: "/budget", icon: Target, label: "Budget" },
-  { to: "/analytics", icon: PieChart, label: "Analytics" },
-];
+import { useState, useEffect, useCallback } from "react";
+import { Outlet, useLocation } from "react-router-dom";
+import Sidebar from "./Sidebar";
+import Header from "./Header";
 
-function Sidebar() {
+// =============================================
+// CONSTANTS
+// =============================================
+const SIDEBAR_WIDTH = "220px";
+const HEADER_HEIGHT = "56px";
+
+// =============================================
+// MAIN LAYOUT COMPONENT
+// =============================================
+function MainLayout() {
+  // TỐI ƯU (Junior): State isMobileMenuOpen sống ở đây — parent duy nhất
+  // biết trạng thái của drawer. Cả Header (toggle) và Sidebar (close)
+  // đều nhận callback từ đây để thay đổi state này.
+  // Nếu để state trong Sidebar: Header sẽ không biết Sidebar đang open/close.
+  // Nếu để state trong Header: Sidebar sẽ không biết khi nào cần tự đóng.
+  // -> Giải pháp: "Lift state up" lên component cha chung (MainLayout).
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const location = useLocation();
+
+  // =============================================
+  // TỐI ƯU (Junior): useCallback để tránh tạo function mới mỗi lần render.
+  // Nếu không có useCallback, Header và Sidebar sẽ re-render mỗi lần
+  // MainLayout render (dù các props khác không thay đổi).
+  // Kết hợp với React.memo (nếu cần sau này) cho performance tốt hơn.
+  // =============================================
+  const handleMenuToggle = useCallback(() => {
+    setIsMobileMenuOpen((prev) => !prev);
+  }, []);
+
+  const handleMenuClose = useCallback(() => {
+    setIsMobileMenuOpen(false);
+  }, []);
+
+  // TỐI ƯU (Junior): Tự động đóng drawer khi user navigate sang trang mới.
+  // Nếu không có effect này: User bấm "Giao dịch" -> trang thay đổi nhưng
+  // drawer vẫn mở che mất content. UX rất tệ.
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  // TỐI ƯU (Junior): Đóng drawer khi nhấn Escape — accessibility standard.
+  // Screen reader và keyboard navigation users cần có cách thoát modal/drawer.
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && isMobileMenuOpen) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isMobileMenuOpen]);
+
+  // TỐI ƯU (Junior): Khóa scroll của body khi drawer mở trên mobile.
+  // Nếu không lock: user có thể scroll trang phía sau overlay — rất confusing.
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    // Cleanup khi component unmount
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileMenuOpen]);
+
   return (
-    <aside
-      className="hidden md:flex flex-col h-screen sticky top-0 w-[240px] border-r"
+    <div
       style={{
+        display: "flex",
+        minHeight: "100vh",
         backgroundColor: "var(--color-bg)",
-        borderColor: "var(--color-border",
       }}
     >
-      {/* Logo */}
-      <div className="px-6 py-7 flex items-center gap-2.5">
+      {/* =============================================
+          DESKTOP SIDEBAR — hiển thị cố định bên trái
+          Ẩn hoàn toàn trên mobile (<1024px) qua CSS
+          ============================================= */}
+      <div className="desktop-sidebar-wrapper">
         <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center"
-          style={{ backgroundColor: "var(--color-ink)" }}
-        >
-          <TrendingUp size={14} style={{ color: "var(--color-gold" }} />
-        </div>
-        <span
           style={{
-            fontFamily: "var(--font-serif)",
-            fontSize: "1.1875rem",
-            fontWeight: 500,
-            color: "var(--color-ink)",
+            width: SIDEBAR_WIDTH,
+            height: "100vh",
+            position: "sticky",
+            top: 0,
+            // Sidebar không scroll theo trang — content bên phải scroll
+            flexShrink: 0,
+            overflow: "hidden",
           }}
         >
-          Vault
-        </span>
+          {/* Desktop: không truyền onClose vì không cần nút X */}
+          <Sidebar onClose={null} />
+        </div>
       </div>
 
+      {/* =============================================
+          MOBILE DRAWER — slide từ trái khi mở
+          ============================================= */}
+      {/* Overlay mờ — tap để đóng */}
       <div
-        className="h-px mx-4"
-        style={{ backgroundColor: "var(--color-border)" }}
+        aria-hidden="true"
+        onClick={handleMenuClose}
+        className="mobile-overlay"
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 40,
+          backgroundColor: "rgba(0, 0, 0, 0.4)",
+          // Transition fade-in/out cho overlay
+          opacity: isMobileMenuOpen ? 1 : 0,
+          pointerEvents: isMobileMenuOpen ? "auto" : "none",
+          transition: "opacity 0.25s ease",
+          // Chỉ hiện trên mobile
+          display: "none",
+        }}
       />
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {NAV_ITEMS.map(({ to, icon: Icon, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150
-              ${isActive ? "text-[var(--color-ink)]" : "text-[var(--color-ink-2)] hover:text-[var(--color-ink)]"}`
-            }
-            style={({ isActive }) => ({
-              backgroundColor: isActive
-                ? "var(--color-bg-subtle)"
-                : "transparent",
-            })}
-          >
-            {({ isActive }) => (
-              <>
-                <Icon size={16} strokeWith={isActive ? 2 : 1.5} />
-                <span
-                  style={{
-                    fontSize: "0.9375rem",
-                    fontWeight: isActive ? 500 : 400,
-                  }}
-                >
-                  {label}
-                </span>
-              </>
-            )}
-          </NavLink>
-        ))}
-      </nav>
+      {/* Drawer panel — slide in từ bên trái */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menu điều hướng"
+        className="mobile-drawer"
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          bottom: 0,
+          width: SIDEBAR_WIDTH,
+          zIndex: 50,
+          // Slide animation: dùng transform thay vì left/margin
+          // transform GPU-accelerated -> animation mượt hơn nhiều
+          transform: isMobileMenuOpen
+            ? "translateX(0)"
+            : `translateX(-${SIDEBAR_WIDTH})`,
+          transition: "transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+          // Chỉ hiện trên mobile
+          display: "none",
+          // Shadow đẹp khi drawer mở
+          boxShadow: isMobileMenuOpen
+            ? "4px 0 24px rgba(0,0,0,0.12), 1px 0 0 rgba(0,0,0,0.06)"
+            : "none",
+        }}
+      >
+        {/* Mobile: truyền onClose để có nút X trong Sidebar */}
+        <Sidebar onClose={handleMenuClose} />
+      </div>
 
-      {/* Bottom: User + Logout */}
-      <div className="p-4 space-y-1">
-        <div
-          className="h-px mb-3"
-          style={{ backgroundColor: "var(--color-border)" }}
-        />
-        <NavLink
-          to="/settings"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-150"
-          style={{ color: "var(--color-ink-2)" }}
-        >
-          <Settings size={16} strokeWith={1.5} />
-          <span style={{ fontSize: "0.9375rem" }}>Settings</span>
-        </NavLink>
-        <button
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-150"
-          style={{ color: "var(--color-ink-2)" }}
-          onClick={() => {
-            /* dispatch logout */
+      {/* =============================================
+          MAIN CONTENT AREA (Header + Page)
+          ============================================= */}
+      <div
+        style={{
+          flex: 1,
+          minWidth: 0, // Quan trọng: ngăn flex child overflowing
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        {/* Header sticky — nhận callback để toggle mobile drawer */}
+        <Header onMenuToggle={handleMenuToggle} />
+
+        {/* Page content — <Outlet /> render trang con từ React Router */}
+        <main
+          style={{
+            flex: 1,
+            minWidth: 0,
           }}
         >
-          <LogOut size={16} strokeWith={1.5} />
-          <span style={{ fontSize: "0.9375rem" }}>Logout</span>
-        </button>
-
-        {/* User Avatar */}
-        <div
-          className="flex items-center gap-3 px-3 pt-3 mt-1 border-t"
-          style={{ borderColor: "var(--color-border" }}
-        >
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium"
-            style={{
-              backgroundColor: "var(--color-gold-light, #f3e4a0)",
-              color: "var(--color-ink)",
-            }}
-          >
-            HN
-          </div>
-          <div className="flex-1 min-w-0">
-            <p
-              style={{
-                fontSize: "0.875rem",
-                fontWeight: 500,
-                color: "var(--color-ink)",
-              }}
-              className="truncate"
-            >
-              Huy Nguyen
-            </p>
-            <p className="label-caps truncate">Personal</p>
-          </div>
-        </div>
+          <Outlet />
+        </main>
       </div>
-    </aside>
-  );
-}
 
-function MainLayout() {
-  return (
-    /**
-     * Dùng CSS Grid `grid-cols-[auto_1fr] thay vì flexbox
-     * Grid tự động tính kích thước cột theo nội dung Sidebar
-     * `overflow-hidden` trên container + `overflow-y-auto` trên main
-     * để sidebar sticky hoạt động đúng và main scrollable riêng biệt
-     */
-    <div
-      className="flex min-h-screen"
-      style={{ backgroundColor: "var(--color-bg)" }}
-    >
-      <Sidebar />
+      {/* =============================================
+          RESPONSIVE CSS
+          Dùng style tag thay vì Tailwind breakpoint class
+          để tránh conflict với inline styles và đảm bảo
+          specificity rõ ràng.
+          ============================================= */}
+      <style>{`
+        /* Desktop (≥1024px): Hiện sidebar cố định, ẩn mobile elements */
+        @media (min-width: 1024px) {
+          .desktop-sidebar-wrapper {
+            display: flex !important;
+          }
+          .mobile-overlay,
+          .mobile-drawer {
+            display: none !important;
+          }
+        }
 
-      {/* Main content area */}
-      <main className="flex-1 min-w-0">
-        {/* Outlet: Nơi render trang con (Dashboard, Transaction,...) */}
-        <Outlet />
-      </main>
+        /* Mobile/Tablet (<1024px): Ẩn desktop sidebar, hiện mobile elements */
+        @media (max-width: 1023px) {
+          .desktop-sidebar-wrapper {
+            display: none !important;
+          }
+          .mobile-overlay {
+            display: block !important;
+          }
+          .mobile-drawer {
+            display: block !important;
+          }
+        }
+
+        /* Ngăn scroll ngang khi drawer đang slide */
+        html {
+          overflow-x: hidden;
+        }
+      `}</style>
     </div>
   );
 }

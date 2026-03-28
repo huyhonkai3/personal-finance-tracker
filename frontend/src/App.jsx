@@ -1,12 +1,6 @@
 // =============================================
 // App.jsx - Router & Route Structure
 // =============================================
-// TỐI ƯU (Junior): Tách cấu trúc route ra 3 tầng rõ ràng:
-//   1. PublicRoute  -> Chỉ cho user CHƯA đăng nhập (Login, Register)
-//      Nếu đã đăng nhập -> redirect về Dashboard
-//   2. PrivateRoute -> Chỉ cho user ĐÃ đăng nhập
-//      Nếu chưa đăng nhập -> redirect về Login
-//   3. Layout components -> Bọc các trang cùng layout (sidebar, navbar, v.v.)
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
@@ -23,27 +17,13 @@ import TestUI from "@/pages/TestUI";
 // =============================================
 // Route Guards
 // =============================================
-
-/**
- * PublicRoute: Chỉ dành cho user chưa đăng nhập.
- * Nếu đã đăng nhập -> redirect về Dashboard.
- * Ví dụ: Vào trang Login khi đã login -> không có ý nghĩa, redirect ngay
- */
 const PublicRoute = ({ children }) => {
-  // TODO: Thay bằng useAuth() hook sau khi implement AuthContext (Ngày 5)
-  const isAuthenticated = false; // Placeholder
+  const isAuthenticated = false; // TODO Ngày 7: Thay bằng useAuth()
   return isAuthenticated ? <Navigate to="/dashboard" replace /> : children;
 };
 
-/**
- * PrivateRoute: Chỉ dành cho user đã đăng nhập.
- * Nếu chưa đăng nhập -> redirect về trang Login.
- * `replace`: Thay thế history entry hiện tại thay vì push mới
- *   -> User nhấn Back từ Login sẽ không quay lại trang protected
- */
 const PrivateRoute = ({ children }) => {
-  // TODO: Thay bằng useAuth() hook sau khi implement AuthContext (Ngày 5)
-  const isAuthenticated = true; // Placeholder - tạm cho là đã đăng nhập để xem Dashboard
+  const isAuthenticated = true; // TODO Ngày 7: Thay bằng useAuth()
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
@@ -54,7 +34,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* ===== Auth Routes (Không có sidebar/navbar chính) ===== */}
+        {/* ===== Auth Routes ===== */}
         <Route
           element={
             <PublicRoute>
@@ -66,7 +46,19 @@ function App() {
           <Route path="/register" element={<Register />} />
         </Route>
 
-        {/* ===== App Routes (Có sidebar, navbar) ===== */}
+        {/* ===== App Routes — bọc trong MainLayout mới ===== */}
+        {/*
+          Cấu trúc sau khi render:
+            <PrivateRoute>
+              <MainLayout>          ← Sidebar + Header
+                <Outlet />          ← Nơi Dashboard / TestUI được render
+              </MainLayout>
+            </PrivateRoute>
+
+          TỐI ƯU (Junior): Mọi trang cần layout chính (sidebar, header)
+          đều đặt làm Route con của Route có element={<MainLayout />}.
+          Thêm trang mới chỉ cần thêm <Route> con — không cần sửa MainLayout.
+        */}
         <Route
           element={
             <PrivateRoute>
@@ -76,12 +68,15 @@ function App() {
         >
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/test-ui" element={<TestUI />} />
+          {/* TODO Ngày 8+: Thêm các trang sau */}
+          {/* <Route path="/transactions" element={<Transactions />} /> */}
+          {/* <Route path="/budgets"      element={<Budgets />}      /> */}
+          {/* <Route path="/reports"      element={<Reports />}      /> */}
+          {/* <Route path="/settings"     element={<Settings />}     /> */}
         </Route>
 
         {/* ===== Fallback Routes ===== */}
-        {/* Root "/" -> redirect về Dashboard nếu đã login, Login nếu chưa */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        {/* 404: Bất kỳ path không khớp -> về Dashboard */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>

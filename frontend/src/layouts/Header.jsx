@@ -1,28 +1,31 @@
-/**
- * layouts/Header.jsx - Topbar 'Quiet Wealth'
- *
- * Thiết kế: Thanh mảnh, không chiếm diện tích. Khi cuộn trang,
- * background blur nhẹ để nổi trên content nhưng không che khuất.
- * Mobile: Hamburger bên trái, logo giữa - gióng app banking cao cấp.
- */
+// =============================================
+// layouts/Header.jsx — Topbar "Quiet Wealth"
+// =============================================
+// Thiết kế: Thanh mảnh, không chiếm diện tích. Khi cuộn trang,
+// background blur nhẹ để nổi trên content nhưng không che khuất.
+// Mobile: Hamburger bên trái, logo giữa — giống app banking cao cấp.
+
 import { useLocation } from "react-router-dom";
 import { Menu, Bell, ChevronDown, Search } from "lucide-react";
 
-/**
- * ============ MAP: path -> tên trang hiển thị trên Header ============
- * Tách mapping này ra để dễ thêm trang mới
- * Alternative: Dùng useMatches() của RR6 để lấy breadcrumb, nhưng approach này đơn giản hơn và đủ dùng cho Fresher.
- */
+// =============================================
+// MAP: path -> tên trang hiển thị trên Header
+// =============================================
+// TỐI ƯU (Junior): Tách mapping này ra để dễ thêm trang mới.
+// Alternative: Dùng useMatches() của RR6 để lấy breadcrumb, nhưng
+// approach này đơn giản hơn và đủ dùng cho Fresher.
 const PAGE_TITLES = {
   "/dashboard": "Tổng quan",
   "/transactions": "Giao dịch",
-  budgets: "Ngân sách",
+  "/budgets": "Ngân sách",
   "/reports": "Báo cáo",
   "/settings": "Cài đặt",
   "/test-ui": "Test UI",
 };
 
-// =========== SUB-COMPONENT: NotificationBell
+// =============================================
+// SUB-COMPONENT: NotificationBell
+// =============================================
 function NotificationBell({ count = 0 }) {
   return (
     <button
@@ -43,8 +46,8 @@ function NotificationBell({ count = 0 }) {
         flexShrink: 0,
       }}
       onMouseEnter={(e) => {
-        ((e.currentTarget.style.borderColor = "var(--color-border)"),
-          (e.currentTarget.style.color = "var(--color-ink-2)"));
+        e.currentTarget.style.borderColor = "var(--color-ink-3)";
+        e.currentTarget.style.color = "var(--color-ink)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.borderColor = "var(--color-border)";
@@ -66,7 +69,7 @@ function NotificationBell({ count = 0 }) {
             color: "var(--color-ink)",
             fontSize: "0.5625rem",
             fontWeight: 700,
-            fontFamily: "var(--color-sans)",
+            fontFamily: "var(--font-sans)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -82,24 +85,24 @@ function NotificationBell({ count = 0 }) {
   );
 }
 
-/**
- * ============ MAIN HEADER COMPONENT ============
- *
- * Header nhận 'onMenuToggle' prop từ MainLayout
- * Khi user bấm nút Hamburger, Header không tự xử lý việc show/hide Sidebar - nó chỉ gọi callback lên parent (MainLayout) để parent quyết định.
- * Pattern: Child component không tự quản lý state của sibling (Sidebar).
- * MainLayout là 'controller' duy nhất biết trạng thái drawer.
- */
+// =============================================
+// MAIN HEADER COMPONENT
+// =============================================
+// TỐI ƯU (Junior): Header nhận `onMenuToggle` prop từ MainLayout.
+// Khi user bấm nút Hamburger, Header KHÔNG tự xử lý việc show/hide Sidebar —
+// nó chỉ gọi callback lên parent (MainLayout) để parent quyết định.
+// Pattern: Child component không tự quản lý state của sibling (Sidebar).
+// MainLayout là "controller" duy nhất biết trạng thái drawer.
 function Header({ onMenuToggle }) {
   const location = useLocation();
 
-  // Lấy tên trang từ map, fallback về 'Vault' nếu không có
-  const pageTitle = PAGE_TITLES[location.pathname] || "Vault";
+  // Lấy tên trang từ map, fallback về "Vault" nếu không có
+  const pageTitle = PAGE_TITLES[location.pathname] ?? "Vault";
 
   return (
     <header
       style={{
-        height: "56p",
+        height: "56px",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
@@ -107,7 +110,7 @@ function Header({ onMenuToggle }) {
         padding: "0 1.25rem",
         borderBottom: "1px solid var(--color-border)",
         backgroundColor: "var(--color-bg)",
-        // Sticky với backdrop-blur khi cuộn - cảm giác 'floating' thanh lịch
+        // Sticky với backdrop-blur khi cuộn — cảm giác "floating" thanh lịch
         position: "sticky",
         top: 0,
         zIndex: 20,
@@ -116,9 +119,9 @@ function Header({ onMenuToggle }) {
         flexShrink: 0,
       }}
     >
-      {/* =========== LEFT: Hamburger (mobile) + Tên trang =========== */}
+      {/* ===== LEFT: Hamburger (mobile) + Tên trang ===== */}
       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-        {/* Hamburger - chỉ hiện trên mobile (lg: ẩn qua CSS class) */}
+        {/* Hamburger — chỉ hiện trên mobile (lg: ẩn qua CSS class) */}
         <button
           onClick={onMenuToggle}
           aria-label="Mở menu điều hướng"
@@ -160,7 +163,7 @@ function Header({ onMenuToggle }) {
           >
             {pageTitle}
           </h1>
-          {/* Breadcrumb nhỏ phía dưới - subtle context */}
+          {/* Breadcrumb nhỏ phía dưới — subtle context */}
           <p
             style={{
               fontFamily: "var(--font-sans)",
@@ -178,9 +181,9 @@ function Header({ onMenuToggle }) {
         </div>
       </div>
 
-      {/* =============== RIGHT: Search + Bell + User ============== */}
+      {/* ===== RIGHT: Search + Bell + User ===== */}
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-        {/* Search button - chỉ icon trên mobile, có thể expand sau */}
+        {/* Search button — chỉ icon trên mobile, có thể expand sau */}
         <button
           aria-label="Tìm kiếm"
           style={{
@@ -209,7 +212,7 @@ function Header({ onMenuToggle }) {
           <Search size={14} strokeWidth={1.75} />
         </button>
 
-        {/* Notification Bell */}
+        {/* Notification Bell với 3 thông báo mẫu */}
         <NotificationBell count={3} />
 
         {/* User Avatar Button */}
@@ -224,7 +227,7 @@ function Header({ onMenuToggle }) {
             borderRadius: "8px",
             padding: "0.3125rem 0.5rem 0.3125rem 0.375rem",
             cursor: "pointer",
-            transition: "all 0.5s ease",
+            transition: "all 0.15s ease",
             height: "34px",
           }}
           onMouseEnter={(e) => {
@@ -242,8 +245,8 @@ function Header({ onMenuToggle }) {
               width: "22px",
               height: "22px",
               borderRadius: "50%",
-              backgroundColor: "var(--color-gold-bg), #fdfbf3",
-              border: "1px solid rgba(212, 168, 67, 0.3)",
+              backgroundColor: "var(--color-gold-bg, #FDFBF3)",
+              border: "1px solid rgba(212,168,67,0.3)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -262,8 +265,7 @@ function Header({ onMenuToggle }) {
               HN
             </span>
           </div>
-
-          {/* Tên - ẩn trên mobile nhỏ */}
+          {/* Tên — ẩn trên mobile nhỏ */}
           <span
             className="header-username"
             style={{
@@ -280,23 +282,21 @@ function Header({ onMenuToggle }) {
         </button>
       </div>
 
-      {/* ======== Responsive CSS ========= */}
-      <style>
-        {`
+      {/* ===== Responsive CSS ===== */}
+      <style>{`
         /* Desktop: ẩn hamburger */
         @media (min-width: 1024px) {
           .lg-hidden-hamburger {
-          display: none !important;
+            display: none !important;
           }
         }
         /* Mobile nhỏ: ẩn username trong header để tiết kiệm chỗ */
         @media (max-width: 480px) {
           .header-username {
-            display: none !importtant;
+            display: none !important;
           }
         }
-        `}
-      </style>
+      `}</style>
     </header>
   );
 }

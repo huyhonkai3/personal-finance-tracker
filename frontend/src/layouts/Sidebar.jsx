@@ -1,10 +1,10 @@
-/**
- * layouts/Sidebar.jsx - Navigation 'Quiet Wealth'
- *
- * Thiết kế: Không phải admin panel. Không background khối màu nặng nề
- * Active state: Chỉ một vệt vàng 2px bên trái + text đậm hơn. Đủ rồi.
- * Cảm hứng: Notion sidebar gặp private banking app.
- */
+// =============================================
+// layouts/Sidebar.jsx — Navigation "Quiet Wealth"
+// =============================================
+// Thiết kế: Không phải admin panel. Không background khối màu nặng nề.
+// Active state: Chỉ một vệt vàng 2px bên trái + text đậm hơn. Đủ rồi.
+// Cảm hứng: Notion sidebar gặp private banking app.
+
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -17,18 +17,17 @@ import {
   X,
 } from "lucide-react";
 
-/**
- * =============== NAVIGATION CONFIG ===============
- *
- * Tách config ra ngoài component thay vì viết JSX lặp lại.
- * Khi cần thêm trang mới, chỉ thêm 1 object vào mảng này - không sờ vào JSX.
- */
+// =============================================
+// NAVIGATION CONFIG
+// =============================================
+// TỐI ƯU (Junior): Tách config ra ngoài component thay vì viết JSX lặp lại.
+// Khi cần thêm trang mới, chỉ thêm 1 object vào mảng này — không sờ vào JSX.
 const NAV_ITEMS = [
   {
     to: "/dashboard",
     icon: LayoutDashboard,
     label: "Tổng quan",
-    // end: true, để chỉ match exact '/dashboard', không match '/dashboard/...'
+    // end: true để chỉ match exact "/dashboard", không match "/dashboard/..."
     end: true,
   },
   {
@@ -56,7 +55,9 @@ const NAV_BOTTOM = [
   },
 ];
 
-// ================ SUB-COMPONENTS: NavItem ===============
+// =============================================
+// SUB-COMPONENT: NavItem
+// =============================================
 function NavItem({ to, icon: Icon, label, end, onClick }) {
   return (
     <NavLink
@@ -65,10 +66,9 @@ function NavItem({ to, icon: Icon, label, end, onClick }) {
       onClick={onClick}
       className="block"
       style={({ isActive }) => ({
-        /**
-         * NavLink truyền 'isActive' vào style function
-         * Dùng inline style cho CSS variables vì Tailwind không thể conditionally dùng var() trong class string một cách đáng tin cậy.
-         */
+        // TỐI ƯU (Junior): NavLink truyền `isActive` vào style function.
+        // Dùng inline style cho CSS variables vì Tailwind không thể
+        // conditionally dùng var() trong class string một cách đáng tin cậy.
         textDecoration: "none",
       })}
     >
@@ -82,6 +82,7 @@ function NavItem({ to, icon: Icon, label, end, onClick }) {
             borderRadius: "0.5rem",
             marginBottom: "1px",
             position: "relative",
+            transition: "all 0.15s ease",
             cursor: "pointer",
             // Active: background rất nhạt (5% opacity ink)
             backgroundColor: isActive
@@ -90,7 +91,7 @@ function NavItem({ to, icon: Icon, label, end, onClick }) {
           }}
           className="nav-item-hover"
         >
-          {/* Accent bar bên trái - chỉ hiện khi active */}
+          {/* Accent bar bên trái — chỉ hiện khi active */}
           {isActive && (
             <div
               style={{
@@ -135,14 +136,13 @@ function NavItem({ to, icon: Icon, label, end, onClick }) {
   );
 }
 
-/**
- * =============== MAIN SIDEBAR COMPONENT ===============
- *
- * Sidebar nhận onClose prop từ MainLayout
- * Khi use click vào một menu item trên mobile, gọi onClose() để đóng drawer.
- * Pattern này gọi là 'lifting state up' - state sống ở parent (MainLayout).
- * Sidebar chỉ nhận callback để thông báo lên. Không tự quản lý state open/close.`
- */
+// =============================================
+// MAIN SIDEBAR COMPONENT
+// =============================================
+// TỐI ƯU (Junior): Sidebar nhận `onClose` prop từ MainLayout.
+// Khi user click vào một menu item trên mobile, gọi onClose() để đóng drawer.
+// Pattern này gọi là "lifting state up" — state sống ở parent (MainLayout),
+// Sidebar chỉ nhận callback để thông báo lên. Không tự quản lý state open/close.
 function Sidebar({ onClose }) {
   return (
     <aside
@@ -156,7 +156,7 @@ function Sidebar({ onClose }) {
         flexShrink: 0,
       }}
     >
-      {/* ======== LOGO ======== */}
+      {/* ===== LOGO ===== */}
       <div
         style={{
           padding: "1.375rem 1.25rem 1rem",
@@ -200,7 +200,7 @@ function Sidebar({ onClose }) {
             onClick={onClose}
             aria-label="Đóng menu"
             style={{
-              backgroundColor: "transparent",
+              background: "transparent",
               border: "none",
               cursor: "pointer",
               color: "var(--color-ink-3)",
@@ -225,12 +225,12 @@ function Sidebar({ onClose }) {
         }}
       />
 
-      {/* ========= NAVIGATION CHÍNH ============= */}
+      {/* ===== NAVIGATION CHÍNH ===== */}
       <nav
         style={{ flex: 1, padding: "0 0.5rem", overflowY: "auto" }}
         aria-label="Menu điều hướng chính"
       >
-        {/* Label section nhỏ - tinh tế như Notion */}
+        {/* Label section nhỏ — tinh tế như Notion */}
         <p
           style={{
             fontFamily: "var(--font-sans)",
@@ -239,6 +239,7 @@ function Sidebar({ onClose }) {
             letterSpacing: "0.1em",
             textTransform: "uppercase",
             color: "var(--color-ink-3)",
+            padding: "0 0.875rem",
             marginBottom: "0.375rem",
           }}
         >
@@ -255,8 +256,8 @@ function Sidebar({ onClose }) {
         ))}
       </nav>
 
-      {/* ======== NAVIGATION DƯỚI (Settings + User) =========== */}
-      <div style={{ padding: "0.5re 0.5rem 0" }}>
+      {/* ===== NAVIGATION DƯỚI (Settings + User) ===== */}
+      <div style={{ padding: "0.5rem 0.5rem 0" }}>
         <div
           style={{
             height: "1px",
@@ -271,7 +272,7 @@ function Sidebar({ onClose }) {
         ))}
       </div>
 
-      {/* ========== USER INFO + LOGOUT =========== */}
+      {/* ===== USER INFO + LOGOUT ===== */}
       <div style={{ padding: "0.5rem 0.875rem 1.25rem" }}>
         <div
           style={{
@@ -290,8 +291,8 @@ function Sidebar({ onClose }) {
               width: "30px",
               height: "30px",
               borderRadius: "50%",
-              backgroundColor: "var(--color-gold-bg, #fdfbf3)",
-              border: "1px solid rgba(212, 168, 67, 0.3)",
+              backgroundColor: "var(--color-gold-bg, #FDFBF3)",
+              border: "1px solid rgba(212,168,67,0.3)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -347,7 +348,7 @@ function Sidebar({ onClose }) {
               background: "transparent",
               border: "none",
               cursor: "pointer",
-              color: "var(--color-ink3)",
+              color: "var(--color-ink-3)",
               padding: "0.125rem",
               display: "flex",
               borderRadius: "4px",
@@ -367,11 +368,11 @@ function Sidebar({ onClose }) {
       </div>
 
       {/* Inline style cho hover state của nav items */}
-      <style>
-        {`.nav-item-hover:hover {
-            background-color: rgba(26, 26, 26, 0.04) !important;
-          }`}
-      </style>
+      <style>{`
+        .nav-item-hover:hover {
+          background-color: rgba(26, 26, 26, 0.04) !important;
+        }
+      `}</style>
     </aside>
   );
 }

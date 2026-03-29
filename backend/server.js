@@ -53,9 +53,9 @@ if (process.env.NODE_ENV === "development") {
 app.get("/", (req, res) => {
   res.json({ message: "API is running..." });
 });
-// Auth routes: Đăng ký, Đăng nhập
-// Mọi request đến /api/auth/... sẽ được chuyển vào authRoutes để xử lý
 app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/categories", require("./routes/categoryRoutes"));
+app.use("/api/transactions", require("./routes/transactionRoutes"));
 
 // ========== Global Error Handler Middleware ===========
 // Đây là middleware đặc biệt với 4 tham số (err, req, res, next)

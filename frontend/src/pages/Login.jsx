@@ -1,7 +1,13 @@
-// pages/Login.jsx
+// =============================================
+// src/pages/Login.jsx
+// =============================================
+// SỬA ĐỔI: setCredentials chỉ nhận `user`, không nhận `token`
+// vì token đã nằm trong HTTP-Only Cookie (backend tự set)
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+
 import { loginApi } from "@/api/authApi";
 import useAuthStore from "@/store/authStore";
 
@@ -9,41 +15,35 @@ function Login() {
   const navigate = useNavigate();
   const setCredentials = useAuthStore((state) => state.setCredentials);
 
-  // Form states
   const [form, setForm] = useState({ email: "", password: "" });
-
-  // UI states
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(""); // Thông báo lỗi tiếng việt
+  const [error, setError] = useState("");
 
   const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Reset lỗi cũ mỗi lần submit mới
     setError("");
     setIsLoading(true);
 
     try {
-      // Gọi API login - axiosClient interceptor tự unwrap response.data
+      // Backend trả về: { _id, name, email }
+      // Token đã được backend gắn vào HTTP-Only Cookie tự động
       const data = await loginApi({
         email: form.email,
         password: form.password,
       });
-      // Lưu user và token vào Zustand store (và localStorage qua persist)
-      setCredentials(data, data.token);
-      // Chuyển về dashboard
+
+      // Lưu user vào store (không cần truyền token)
+      setCredentials(data);
       navigate("/dashboard", { replace: true });
     } catch (err) {
-      // Ưu tiên message từ backend, fallback về generic
       const msg = err?.response?.data?.message;
-
       setError(
         msg === "Email hoặc mật khẩu không đúng"
-          ? "Email hoặc mật khẩu không đúng. Vui lòng thử lại"
+          ? "Email hoặc mật khẩu không đúng. Vui lòng thử lại."
           : msg || "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
       );
     } finally {
@@ -53,7 +53,6 @@ function Login() {
 
   return (
     <div className="space-y-8 animate-fade-up">
-      {/* Header */}
       <div className="space-y-1">
         <h1
           style={{
@@ -71,7 +70,6 @@ function Login() {
         </p>
       </div>
 
-      {/* Thông báo lỗi - chỉ hiện khi có lỗi */}
       {error && (
         <div
           role="alert"
@@ -79,7 +77,7 @@ function Login() {
             padding: "0.75rem 1rem",
             borderRadius: "0.625rem",
             backgroundColor: "var(--color-expense-bg)",
-            border: "1px solid rgba(139, 74, 58, 0.2)",
+            border: "1px solid rgba(139,74,58,0.2)",
             fontSize: "0.875rem",
             color: "var(--color-expense)",
             lineHeight: 1.5,
@@ -89,7 +87,6 @@ function Login() {
         </div>
       )}
 
-      {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
           <label className="label-caps" htmlFor="email">
@@ -127,10 +124,10 @@ function Login() {
             />
             <button
               type="button"
+              tabIndex={-1}
               className="absolute right-3 top-1/2 -translate-y-1/2"
               style={{ color: "var(--color-ink-3)" }}
               onClick={() => setShowPassword((p) => !p)}
-              tabIndex={-1}
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -147,8 +144,7 @@ function Login() {
         >
           {isLoading ? (
             <>
-              <Loader2 size={15} className="animate-spin" />
-              Đang đăng nhập...
+              <Loader2 size={15} className="animate-spin" /> Đang đăng nhập...
             </>
           ) : (
             "Đăng nhập"
@@ -156,7 +152,6 @@ function Login() {
         </button>
       </form>
 
-      {/* Link đến Register */}
       <p
         style={{
           textAlign: "center",

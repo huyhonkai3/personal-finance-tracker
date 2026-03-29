@@ -1,7 +1,12 @@
-// pages/Register.jsx
+// =============================================
+// src/pages/Register.jsx
+// =============================================
+// SỬA ĐỔI: setCredentials chỉ nhận `user`, không nhận `token`
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+
 import { registerApi } from "@/api/authApi";
 import useAuthStore from "@/store/authStore";
 
@@ -9,10 +14,7 @@ function Register() {
   const navigate = useNavigate();
   const setCredentials = useAuthStore((state) => state.setCredentials);
 
-  // Form state
   const [form, setForm] = useState({ name: "", email: "", password: "" });
-
-  // UI state
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -30,22 +32,19 @@ function Register() {
         email: form.email,
         password: form.password,
       });
-      console.log(data);
 
-      // Đăng ký xong -> tự động đăng nhập
-      setCredentials(data, data.token);
+      // Backend trả { _id, name, email, createdAt } trong body
+      // Token đã nằm trong HTTP-Only Cookie — không cần xử lý thêm
+      setCredentials(data);
       navigate("/dashboard", { replace: true });
     } catch (err) {
       const msg = err?.response?.data?.message;
-
       if (msg?.toLowerCase().includes("email")) {
         setError(
-          "Email này đã được đăng ký. Vui lòng dùng email khác hoặc đăng nhập",
+          "Email này đã được đăng ký. Vui lòng dùng email khác hoặc đăng nhập.",
         );
       } else {
-        setError(
-          msg || "Đăng ký thất bại. Vui lòng kiểm tra tra lại thông tin.",
-        );
+        setError(msg || "Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.");
       }
     } finally {
       setIsLoading(false);
@@ -71,7 +70,6 @@ function Register() {
         </p>
       </div>
 
-      {/* Thông báo lỗi */}
       {error && (
         <div
           role="alert"
@@ -79,7 +77,7 @@ function Register() {
             padding: "0.75rem 1rem",
             borderRadius: "0.625rem",
             backgroundColor: "var(--color-expense-bg)",
-            border: "1px solid rgba(139, 74, 58, 0.2)",
+            border: "1px solid rgba(139,74,58,0.2)",
             fontSize: "0.875rem",
             color: "var(--color-expense)",
             lineHeight: 1.5,
@@ -131,7 +129,7 @@ function Register() {
             name="password"
             type="password"
             className="input-luxury"
-            placeholder="At least 6 characters"
+            placeholder="Ít nhất 6 ký tự"
             value={form.password}
             onChange={handleChange}
             minLength={6}
@@ -149,8 +147,8 @@ function Register() {
         >
           {isLoading ? (
             <>
-              <Loader2 size={15} className="animate-spin" />
-              Đang tạo tài khoản...
+              <Loader2 size={15} className="animate-spin" /> Đang tạo tài
+              khoản...
             </>
           ) : (
             "Tạo tài khoản"
@@ -165,7 +163,7 @@ function Register() {
           color: "var(--color-ink-2)",
         }}
       >
-        Đã có tài khoản{" "}
+        Đã có tài khoản?{" "}
         <Link
           to="/login"
           style={{

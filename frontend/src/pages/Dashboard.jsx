@@ -1,11 +1,14 @@
-/**
- * pages/Dashboard.jsx - Trang tổng quan
- * UI PLACEHOLDER thể hiện phong cách 'Quiet Wealth'
- * Tất cả data đang là static - sẽ kết nối api ở ngày 6
- */
+// =============================================
+// pages/Dashboard.jsx - Trang Tổng Quan
+// =============================================
+// UI PLACEHOLDER thể hiện phong cách "Quiet Wealth"
+// Tất cả data đang là static - sẽ kết nối API ở Ngày 6+
+
 import { ArrowUpRight, ArrowDownRight, Plus, ChevronRight } from "lucide-react";
 
+// =============================================
 // Mock Data - Thay bằng API call sau
+// =============================================
 const MOCK_BALANCE = 124_350_000;
 const MOCK_INCOME = 18_500_000;
 const MOCK_EXPENSE = 6_230_000;
@@ -48,21 +51,25 @@ const MOCK_TRANSACTIONS = [
   },
 ];
 
+// =============================================
 // Helper: Format số tiền Việt Nam
+// =============================================
 const formatVND = (amount, compact = false) => {
   const abs = Math.abs(amount);
   if (compact) {
     if (abs >= 1_000_000_000) return `${(abs / 1_000_000_000).toFixed(1)} tỷ`;
-    if (abs >= 1_000_000) return `${(abs / 1_000_000).toFixed(1)} triệu`;
-    if (abs >= 1_000) return `${(abs / 1_000).toFixed(1)} nghìn`;
+    if (abs >= 1_000_000) return `${(abs / 1_000_000).toFixed(0)} tr`;
+    if (abs >= 1_000) return `${(abs / 1_000).toFixed(0)}k`;
     return abs.toLocaleString("vi-VN");
   }
-  return abs.toLocaleString("vi-VN") + " đ";
+  return abs.toLocaleString("vi-VN") + " ₫";
 };
 
-// ============ Sub Components ============
+// =============================================
+// Sub-components
+// =============================================
 
-// Card KPI nhỏ: Thu/Chi
+/** Card KPI nhỏ: Thu / Chi */
 function StatCard({ label, amount, isIncome }) {
   return (
     <div className="card p-5 space-y-3">
@@ -99,7 +106,7 @@ function StatCard({ label, amount, isIncome }) {
   );
 }
 
-// Một dòng giao dịch
+/** Một dòng giao dịch */
 function TransactionRow({ tx }) {
   const isIncome = tx.amount > 0;
   return (
@@ -167,17 +174,19 @@ function TransactionRow({ tx }) {
   );
 }
 
-// ============ Main DashBoard Component =========
+// =============================================
+// Main Dashboard Component
+// =============================================
 function Dashboard() {
   return (
     <div className="max-w-2xl mx-auto px-5 md:px-8 py-10 md:py-14 space-y-12">
-      {/* ===== Section 1: Header ===== */}
+      {/* ===== SECTION 1: Header ===== */}
       <header className="flex items-start justify-between animate-fade-in">
         <div>
           <p className="label-caps mb-2">Tháng Sáu, 2025</p>
           <h1
             style={{
-              fontFamily: "var(--color-font-sans)",
+              fontFamily: "var(--font-sans)",
               fontSize: "1.125rem",
               fontWeight: 400,
               color: "var(--color-ink-2)",
@@ -195,15 +204,16 @@ function Dashboard() {
         </button>
       </header>
 
-      {/* ====== SECTION 2: HERO BALANCE - Con số trung tâm ============ */}
-      {/* Đây là trái tim của thiết kế: Negativ space rộng, con số serif khổng lồ */}
+      {/* ===== SECTION 2: HERO BALANCE - Con số trung tâm ===== */}
+      {/* Đây là trái tim của thiết kế: Negative space rộng, con số serif khổng lồ */}
       <section
-        className="card-subtle rounded-3xl px-8 py-14 text-center relative overflow-hidden opacity-0 animate-fade-up delay-100"
+        className="card-subtle rounded-3xl px-8 py-14 text-center relative overflow-hidden
+                   opacity-0 animate-fade-up delay-100"
         style={{ animationFillMode: "forwards" }}
       >
         {/* Decorative gold circle ở góc */}
         <div
-          className="absolute -top-16 -right-16 w-48 rounded-full opacity-[0.07]"
+          className="absolute -top-16 -right-16 w-48 h-48 rounded-full opacity-[0.07]"
           style={{ backgroundColor: "var(--color-gold)" }}
         />
         <div
@@ -213,7 +223,7 @@ function Dashboard() {
 
         <p className="label-caps mb-6 relative z-10">Tổng số dư</p>
 
-        {/* Con số HERO - font serif, cực lớn */}
+        {/* Con số HERO - font Serif, cực lớn */}
         <div
           className="relative z-10 opacity-0 animate-number-reveal delay-300"
           style={{ animationFillMode: "forwards" }}
@@ -223,7 +233,7 @@ function Dashboard() {
               fontFamily: "var(--font-serif)",
               fontSize: "clamp(2.75rem, 8vw, 5rem)",
               fontWeight: 500,
-              letterSpacing: "-0.03",
+              letterSpacing: "-0.03em",
               lineHeight: 1,
               color: "var(--color-ink)",
               fontFeatureSettings: '"tnum" on',
@@ -244,23 +254,24 @@ function Dashboard() {
           </p>
         </div>
 
-        {/* Đường kẻ dưới số */}
+        {/* Đường kẻ vàng nhỏ dưới số */}
         <div
           className="w-16 h-px mx-auto mt-7 relative z-10"
           style={{ backgroundColor: "var(--color-gold)", opacity: 0.5 }}
         />
       </section>
 
-      {/* =========== SECTION 3: KPI Cards - Thu/Chi =========== */}
+      {/* ===== SECTION 3: KPI Cards - Thu / Chi ===== */}
       <section
-        className="grid grid-cols-2 gap-4 opacity-0 animate-fade-up delay-200"
+        className="grid grid-cols-2 gap-4
+                          opacity-0 animate-fade-up delay-200"
         style={{ animationFillMode: "forwards" }}
       >
-        <StatCard label="thu nhập" amount={MOCK_INCOME} isIncome={true} />
-        <StatCard label="chi tiêu" amount={MOCK_EXPENSE} isIncome={false} />
+        <StatCard label="Thu nhập" amount={MOCK_INCOME} isIncome={true} />
+        <StatCard label="Chi tiêu" amount={MOCK_EXPENSE} isIncome={false} />
       </section>
 
-      {/* ============ SECTION 4: Budget Progress Bar ========= */}
+      {/* ===== SECTION 4: Budget Progress Bar ===== */}
       <section
         className="opacity-0 animate-fade-up delay-300"
         style={{ animationFillMode: "forwards" }}
@@ -269,7 +280,7 @@ function Dashboard() {
           <div>
             <h2
               style={{
-                fontFamily: "var(--color-sans)",
+                fontFamily: "var(--font-sans)",
                 fontSize: "0.9375rem",
                 fontWeight: 500,
                 color: "var(--color-ink)",
@@ -280,7 +291,7 @@ function Dashboard() {
             <p
               style={{
                 fontSize: "0.8125rem",
-                color: "var(--color-ink)",
+                color: "var(--color-ink-3)",
                 marginTop: "2px",
               }}
             >
@@ -300,19 +311,22 @@ function Dashboard() {
           </span>
         </div>
 
-        {/* Progress Bar */}
+        {/* Progress bar */}
         <div
           className="h-1.5 rounded-full overflow-hidden"
           style={{ backgroundColor: "var(--color-bg-subtle)" }}
         >
           <div
             className="h-full rounded-full transition-all duration-1000"
-            style={{ width: "62.3%", backgroundColor: "var(--color-gold)" }}
+            style={{
+              width: "62.3%",
+              backgroundColor: "var(--color-gold)",
+            }}
           />
         </div>
       </section>
 
-      {/* ======= SECTION 5: Recent Transactions ========= */}
+      {/* ===== SECTION 5: Recent Transactions ===== */}
       <section
         className="opacity-0 animate-fade-up delay-400"
         style={{ animationFillMode: "forwards" }}

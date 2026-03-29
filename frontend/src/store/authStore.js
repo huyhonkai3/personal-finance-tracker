@@ -1,62 +1,38 @@
+// src/store/authStore.js
+
 /**
- * src/store/authStore.js - Zustand Auth Store
+ * Token nằm trong HTTP-Only Cookie - JS không đọc được
+ * Store chỉ lưu 'user' và 'isAuthenticated'
  *
- * Lưu trữ thông tin đăng nhập user.
- * Middleware 'persist' tự động sync state xuống localStorage.
- * -> User F5 trang vẫn còn đăng nhập, không bị mất session.
+ * Làm sao biết user đã đăng nhập nếu không có token trong store?
+ * -> Khi app khởi động, goi API GET /api/auth/profile. Nếu server trả về 200 -> đã login, 401 -> chưa login.
+ * Cách chuẩn khi dùng Cookie-based auth.
  */
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 const useAuthStore = create(
-  /**
-   * Bọc store trong 'persist()' middleware.
-   * Zustand sẽ tự động:
-   * 1. Đọc state từ localStorage khi app khởi động (rehydrate)
-   * 2. Ghi state xuống localStorage mỗi khi state thay đổi -> không cần tự viết localStorage.setItem/getItem ở khắp nơi.
-   */
   persist(
-    (set, get) => ({
-      // STATE
-      /** Thông tin user sau khi đăng nhập. null nếu chưa đăng nhập. */
+    (set) => ({
+      // Thông tin user
       user: null,
-      /** JWT Access Token. null nếu chưa đăng nhập */
-      token: null,
-
-      // ACTION
-
+      // Trạng thái xác thực
+      isAuthenticated: false,
       /**
-       * Lưu thông tin đăng nhập sau khi login/register thành công.
-       * @param {Object} user - Thông tin user từ API response
-       * @param {string} token - JWT Access Token từ API response
+       * Lưu thông tin user sau khi login/register thành công
+       * Backend trả user object trong body, token trong cookie
        */
-      setCredentials: (user, token) => set({ user, token }),
-
-      /**
-       * Đăng xuất: Xóa toàn bộ khỏi store và localStorage.
-       * Được gọi từ Sidebar logout và Axios interceptor (khi nhận 401).
-       */
-      logout: () => set({ user: null, token: null }),
-
-      // COMPUTED
-      /** true nếu có cả token lẫn user object */
-      isAuthenticated: () => {
-        const { token, user } = get();
-        return !!(token && user);
-      },
+      setCredentials: (user) => set({ user: null, isAuthenticated: true }),
+      // Xóa thông tin khi logout
+      logout: () => set({ user: null, isAuthenticated: false }),
     }),
     {
-      // 'name' là key trong localStorage
-      // Đặt prefix tên app để tránh conflict khi nhiều app chạy cùng localhost.
       name: "vault-auth-storage",
-
       storage: createJSONStorage(() => localStorage),
-
-      // 'partialize' - chỉ persist các field cần thiết.
-      // Actions (function) không cần lưu, chỉ lưu data.
+      // Chỉ persist user và isAuthenticated, không persist token (ko có)
       partialize: (state) => ({
         user: state.user,
-        token: state.token,
+        isAuthenticated: state.isAuthenticated,
       }),
     },
   ),

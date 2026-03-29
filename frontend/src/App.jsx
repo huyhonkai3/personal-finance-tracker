@@ -1,34 +1,23 @@
 // =============================================
-// App.jsx - Router & Route Structure
+// src/App.jsx — Fix: BrowserRouter phải bọc toàn bộ kể cả loading state
 // =============================================
 
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Navigate,
-  replace,
-} from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 
-// Layouts
 import MainLayout from "@/layouts/MainLayout";
 import AuthLayout from "@/layouts/AuthLayout";
-
-// Pages
 import Dashboard from "@/pages/Dashboard";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import TestUI from "@/pages/TestUI";
-
-// ProtectedRoute
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 import useAuthStore from "@/store/authStore";
 import { getMeApi } from "@/api/authApi";
 
 // =============================================
-// Route Guards
+// PublicRoute
 // =============================================
 const PublicRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -36,12 +25,10 @@ const PublicRoute = ({ children }) => {
 };
 
 // =============================================
-// App Component - Route Tree
+// AppRoutes — tách ra để dùng hooks của React Router bên trong BrowserRouter
 // =============================================
-function App() {
-  // isVerifying: true trong lúc đang gọi API check cookie
-  // Tránh flash redirect về /login trước khi biết cookie còn hợp lệ không
-  const [isVerifying, setIsVerifyIng] = useState(true);
+function AppRoutes() {
+  const [isVerifying, setIsVerifying] = useState(true);
 
   const setCredentials = useAuthStore((state) => state.setCredentials);
   const logout = useAuthStore((state) => state.logout);
@@ -49,27 +36,29 @@ function App() {
 
   useEffect(() => {
     const verifySession = async () => {
-      // Nếu store nói chưa đăng nhập -> không cần verify, skip
+      // Nếu store báo chưa đăng nhập -> không cần verify
       if (!isAuthenticated) {
-        setIsVerifyIng(false);
+        setIsVerifying(false);
         return;
       }
 
       try {
+        // Gọi GET /api/auth/profile — cookie tự gửi kèm nhờ withCredentials
         const data = await getMeApi();
         setCredentials(data);
       } catch {
-        // cookie hết hạn hoặc không hợp lệ
+        // Cookie hết hạn -> logout, ProtectedRoute sẽ redirect về /login
         logout();
       } finally {
-        setIsVerifyIng(false);
+        setIsVerifying(false);
       }
     };
+
     verifySession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Hiển thị màn hình trắng/loading trong lúc verify
-  // Tránh flash: user vào /dashboard -> redirect /login -> redirect /dashboard
+  // Loading spinner — nằm BÊN TRONG BrowserRouter nên MainLayout vẫn có context
   if (isVerifying) {
     return (
       <div
@@ -78,16 +67,15 @@ function App() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "var(--color-bg, #faf9f7)",
+          backgroundColor: "var(--color-bg, #FAF9F7)",
         }}
       >
-        {/* Spinner nhỏ, không gây distraction */}
         <div
           style={{
             width: "20px",
             height: "20px",
-            border: "2px solid var(--color-border, #e8e4dd)",
-            borderTopColor: "var(--color-gold, #d4a843)",
+            border: "2px solid var(--color-border, #E8E4DD)",
+            borderTopColor: "var(--color-gold, #D4A843)",
             borderRadius: "50%",
             animation: "spin 0.8s linear infinite",
           }}
@@ -98,42 +86,42 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* ===== Auth Routes ===== */}
-        <Route
-          element={
-            <PublicRoute>
-              <AuthLayout />
-            </PublicRoute>
-          }
-        >
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-        </Route>
+    <Routes>
+      {/* ===== Auth Routes ===== */}
+      <Route
+        element={
+          <PublicRoute>
+            <AuthLayout />
+          </PublicRoute>
+        }
+      >
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Route>
 
-        {/* ===== App Routes — bọc trong MainLayout mới ===== */}
-        {/*
-          Cấu trúc sau khi render:
-            <PrivateRoute>
-              <MainLayout>          ← Sidebar + Header
-                <Outlet />          ← Nơi Dashboard / TestUI được render
-              </MainLayout>
-            </PrivateRoute>
-
-          TỐI ƯU (Junior): Mọi trang cần layout chính (sidebar, header)
-          đều đặt làm Route con của Route có element={<MainLayout />}.
-          Thêm trang mới chỉ cần thêm <Route> con — không cần sửa MainLayout.
-        */}
-        <Route element={<ProtectedRoute />}>
+      {/* ===== Protected Routes ===== */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<MainLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/test-ui" element={<TestUI />} />
+          {/* TODO: thêm các trang khác vào đây */}
         </Route>
+      </Route>
 
-        {/* ===== Fallback Routes ===== */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
+      {/* ===== Fallback ===== */}
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
+  );
+}
+
+// =============================================
+// App — BrowserRouter bọc toàn bộ, kể cả loading state
+// =============================================
+function App() {
+  return (
+    <BrowserRouter>
+      <AppRoutes />
     </BrowserRouter>
   );
 }

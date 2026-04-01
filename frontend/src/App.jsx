@@ -10,6 +10,7 @@ import AuthLayout from "@/layouts/AuthLayout";
 import Dashboard from "@/pages/Dashboard";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
+import Budgets from "@/pages/Budget";
 import TestUI from "@/pages/TestUI";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -104,6 +105,7 @@ function AppRoutes() {
         <Route element={<MainLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/test-ui" element={<TestUI />} />
+          <Route path="/budgets" element={<Budgets />} />
           {/* TODO: thêm các trang khác vào đây */}
         </Route>
       </Route>

@@ -219,7 +219,7 @@ const getBudgetProgress = async (req, res) => {
           Math.round((spentAmount / budget.amount) * 100),
         ),
         // Flag cảnh báo vượt ngân sách - frontend dùng để đổi màu warning
-        isOverBudget: spent.Amount > budget.amount,
+        isOverBudget: spentAmount > budget.amount,
         month: budget.month,
         year: budget.year,
       };

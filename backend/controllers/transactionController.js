@@ -291,9 +291,288 @@ const deleteTransaction = async (req, res) => {
   }
 };
 
+/**
+ * ANALYTICS FUNCTIONS
+ * Tại sao phải dùng Aggregation Pipeline?
+ * Fresher thường làm:
+ *  - const txs = await Transaction.find(filter) -> kéo toàn bộ data về Node.js
+ *  - const total = txs.reduce((sum, tx) => ..., 0) -> tính toán trong JS
+ * Nếu user có 100.000 giao dịch -> Nodejs phải load 100.000 object vào RAM -> Server hết bộ nhớ -> crash hoặc chậm.
+ *
+ * Dùng Aggregation Pipeline để MongoDB tự tính toán ở tầng Database.
+ * Nodejs chỉ nhận kết quả đã được tổng hợp - dù có 100.000 dòng, response vẫn chỉ là vài con số nhỏ. Database được tối ưu cho việc này, nodejs thì không
+ */
+
+/**
+ * @desc Tổng quan thu/chi trong tháng
+ * @route GET /api/transactions/summary?month=6&year=2025
+ * @access Private
+ */
+const getTransactionSummary = async (req, res) => {
+  try {
+    const { month, year } = req.query;
+
+    if (!month || !year) {
+      return res.status(400).json({
+        message: "Vui lòng cung cấp tháng và năm (month, year)",
+      });
+    }
+
+    const m = parseInt(month);
+    const y = parseInt(year);
+    const startDate = new Date(y, m - 1, 1);
+    const endDate = new Date(y, m, 0, 23, 59, 59, 999);
+
+    /**
+     * $match - bộc lọc đầu vào của pipeline
+     * nên đật $match lên đầu để mongo dùng index lọc bớt document ngay từ đầu, tránh xử lý document thừa ở các stage sau.
+     * không có $match đầu -> toàn bộ collection phải đi qua pipeline -> rất chậm.
+     */
+    const result = await Transaction.aggregate([
+      {
+        $match: {
+          user: req.user._id, // chỉ lấy giao dịch của user này
+          date: { $gte: startDate, $lte: endDate }, // trong tháng/năm yêu cầu
+        },
+      },
+      /**
+       * $group - nhóm tất cả document thành 1 kết quả duy nhất
+       * _id: null có nghĩa 'không nhóm theo trường nào, gộp tất cả thành 1 nhóm'.
+       * $cond: điều kiện - nếu type == 'income' thì cộng amount vào totalIncome, ngược lại cộng 0 (không đếm). Tương tự cho totalExpense
+       */
+      {
+        $group: {
+          _id: null,
+          totalIncome: {
+            $sum: { $cond: [{ $eq: ["$type", "income"] }, "$amount", 0] },
+          },
+          totalExpense: {
+            $sum: { $cond: [{ $eq: ["$type", "expense"] }, "$amount", 0] },
+          },
+          count: { $sum: 1 }, // đếm tổng số giao dịch
+        },
+      },
+    ]);
+    /**
+     * aggregation trả về mảng - nếu không có giao dịch nào thì mảng rỗng []
+     * Dùng result[0] để lấy document đầu tiên, fallback 0 nếu không có data
+     */
+    const data = result[0] || { totalIncome: 0, totalExpense: 0, count: 0 };
+
+    return res.status(200).json({
+      message: "Lấy tổng quan giao dịch thành công",
+      data: {
+        month: m,
+        year: y,
+        totalIncome: data.totalIncome,
+        totalExpense: data.totalExpense,
+        balance: data.totalIncome - data.totalExpense, // số dư = thu - chi
+        count: data.count,
+      },
+    });
+  } catch (error) {
+    console.error("Lỗi khi lấy tổng quan giao dịch:", error);
+    return res
+      .status(500)
+      .json({ message: "Lỗi server khi lấy tổng quan giao dịch" });
+  }
+};
+
+/**
+ * @desc Chi tiêu theo danh mục (dữ liệu Donut Chart)
+ * @route GET /api/transactions/category-expense?month=6&year=2025
+ * @access Private
+ */
+const getExpenseByCategory = async (req, res) => {
+  try {
+    const { month, year } = req.query;
+    if (!month || !year) {
+      return res.status(400).json({
+        message: "Vui lòng cung cấp tháng và năm (month, year)",
+      });
+    }
+    const m = parseInt(month);
+    const y = parseInt(year);
+    const startDate = new Date(y, m - 1, 1);
+    const endDate = new Date(y, m, 0, 23, 59, 59, 999);
+
+    const result = await Transaction.aggregate([
+      {
+        $match: {
+          user: req.user._id,
+          type: "expense",
+          date: { $gte: startDate, $lte: endDate },
+        },
+      },
+      /**
+       * Khi _id là một giá trị cụ thể ($category)
+       * mongo tạo ra một nhóm riêng cho mỗi giá trị category._id duy nhất
+       * $sum: '$amount' -> cộng dồn amount của tất cả transaction trong mỗi nhóm
+       * Kết quả: [ { _id: <categoryId>, totalAmount: 1500000, count: 3 }, ... ]
+       */
+      {
+        $group: {
+          _id: "$category", // nhóm theo category ObjectId
+          totalAmount: { $sum: "$amount" },
+          count: { $sum: 1 },
+        },
+      },
+
+      /**
+       * $lookup - JOIN với collection categories
+       * Tương đương SQL: LEFT JOIN categories ON categories._id = transaction.category
+       * from: tên collection muốn join (categories)
+       * localField: field trong collection hiện tại (Transaction._id sau group = categoryId)
+       * foreignField: field trong collection kia để match (_id của Category)
+       * as: tên field chứa kết quả join (mảng)
+       */
+      {
+        $lookup: {
+          from: "categories", //mongo collection name (lowercase, plural)
+          localField: "_id",
+          foreignField: "_id",
+          as: "categoryInfo",
+        },
+      },
+      /**
+       * $unwind: Bung mảng categoryInfo (luôn có 1 phần tử) thành object phẳng
+       * preserveNullAndEmptyArrays: true -> giữ lại nhóm nếu category bị xóa
+       * (không bị lọc mất khỏi kết quả, tránh mất data)
+       */
+      {
+        $project: {
+          _id: 0, // ẩn _id gốc của group
+          categoryId: "$_id",
+          name: "$categoryInfo.name",
+          color: "$categoryInfo.color",
+          icon: "$categoryInfo.icon",
+          totalAmount: 1,
+          count: 1,
+        },
+      },
+
+      // Sort theo tổng tiền giảm dần
+      { $sort: { totalAmount: -1 } },
+    ]);
+
+    // Tính tổng chi để frontend tính $ cho Donut Chart
+    const totalExpense = result.reduce(
+      (sum, item) => sum + item.totalAmount,
+      0,
+    );
+
+    // Thêm percentage vào mỗi item
+    const dataWithPercent = result.map((item) => ({
+      ...item,
+      percentage:
+        totalExpense > 0
+          ? Math.round((item.totalAmount / totalExpense) * 100 * 10) / 10 // làm tròn chữ số thập phân
+          : 0,
+    }));
+
+    return res.status(200).json({
+      message: "Lấy chi tiêu theo danh mục thành công",
+      data: {
+        month,
+        year,
+        totalExpense,
+        categories: dataWithPercent,
+      },
+    });
+  } catch (error) {
+    console.error("Lỗi khi lấy chi tiêu theo danh mục:", error);
+    return res
+      .status(500)
+      .json({ message: "Lỗi server khi lấy chi tiêu theo danh mục" });
+  }
+};
+
+/**
+ * @desc Xu hướng thu/chi theo tháng trong năm (Area/Bar Chart)
+ * @route GET /api/transactions/monthly-trend?year=2025
+ * @access Private
+ */
+const getMonthlyTrend = async (req, res) => {
+  try {
+    const { year } = req.query;
+    const y = year ? parseInt(year) : new Date().getFullYear();
+    const startDate = new Date(y, 0, 1); // 01/01/year
+    const endDate = new Date(y, 11, 31, 23, 59, 59, 999); // 31/12/year
+
+    const result = await Transaction.aggregate([
+      // Stage 1: $match - lọc tất cả giao dịch của user trong năm
+      {
+        $match: {
+          user: req.user._id,
+          date: { $gte: startDate, $lte: endDate },
+        },
+      },
+
+      /**
+       * $group theo tháng + loại giao dịch
+       * $month: 'date' là 'toán tử ngày tháng' của mongo - trích xuất số tháng (1-12) từ field date mà không cần JS code
+       */
+      {
+        $group: {
+          _id: {
+            month: { $monthy: "$date" },
+            type: "$type",
+          },
+          total: { $sum: "$amount" },
+        },
+      },
+
+      // Sort theo tháng tăng dần để frontend không phải sort lại
+      { $sort: { "_id.month": 1 } },
+    ]);
+
+    // Sau khi Aggregation, reshape data:
+    // MongoDB trả về: [{ _id: { month: 1, type: "income" }, total: 5000000 }, ...]
+    // Frontend cần:   [{ month: 1, income: 5000000, expense: 3000000 }, ...]
+    //
+    // Dùng Map để merge 2 document (income, expense) của cùng 1 tháng thành 1 object.
+    const monthMap = new Map();
+
+    // Khởi tạo 12 tháng với giá trị 0 để tháng không có giao dịch vẫn xuất hiện
+    // (Chart sẽ hiện cột 0 thay vì bỏ trống tháng đó — UX tốt hơn nhiều)
+    for (let i = 1; i <= 12; i++) {
+      monthMap.set(i, { month: i, income: 0, expense: 0 });
+    }
+
+    // Ghi đè giá trị thực tế từ Aggregation result
+    result.forEach(({ _id, total }) => {
+      const { month, type } = _id;
+      const entry = monthMap.get(month);
+      if (entry) entry[type] = total; // entry.income = total hoặc entry.expense = total
+    });
+
+    // Chuyển Map thành mảng, thêm balance = income - expense
+    const trendData = Array.from(monthMap.values()).map((item) => ({
+      ...item,
+      balance: item.income - item.expense,
+    }));
+
+    return res.status(200).json({
+      message: "Lấy xu hướng giao dịch theo tháng thành công",
+      data: {
+        year: y,
+        months: trendData, // luôn đủ 12 tháng
+      },
+    });
+  } catch (error) {
+    console.error("Lỗi khi lấy xu hướng giao dịch:", error);
+    return res
+      .status(500)
+      .json({ message: "Lỗi server khi lấy xu hướng giao dịch" });
+  }
+};
+
 module.exports = {
   createTransaction,
   getTransactions,
   updateTransaction,
   deleteTransaction,
+  getTransactionSummary,
+  getExpenseByCategory,
+  getMonthlyTrend,
 };

@@ -1,5 +1,5 @@
 // =============================================
-// pages/Dashboard.jsx — Ngày 17
+// pages/Dashboard.jsx — Ngày 18
 // =============================================
 
 import { useState, useEffect, useCallback } from "react";
@@ -9,6 +9,7 @@ import TransactionFilter from "@/components/transactions/TransactionFilter";
 import TransactionTable from "@/components/transactions/TransactionTable";
 import DashboardMetrics from "@/components/dashboard/DashboardMetrics";
 import ExpenseDonutChart from "@/components/dashboard/ExpenseDonutChart";
+import MonthlyTrendChart from "@/components/dashboard/MonthlyTrendChart"; // MỚI
 import Card from "@/components/ui/Card";
 import { getTransactions } from "@/api/transactionApi";
 
@@ -25,11 +26,6 @@ function Dashboard() {
   const [summary, setSummary] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState(null);
-
-  // refreshKey: tăng lên mỗi khi tạo giao dịch thành công.
-  // DashboardMetrics và ExpenseDonutChart nhận prop này — khi nó thay đổi,
-  // useEffect bên trong chúng tự chạy lại và fetch data mới.
-  // Pattern này sạch hơn việc dùng callback chain hoặc global state.
   const [chartsRefreshKey, setChartsRefreshKey] = useState(0);
 
   const fetchTransactions = useCallback(async () => {
@@ -60,9 +56,8 @@ function Dashboard() {
   const handleTransactionSuccess = () => {
     setTimeout(() => {
       setShowForm(false);
-      // Refresh cả bảng giao dịch lẫn các chart cùng lúc
       fetchTransactions();
-      setChartsRefreshKey((k) => k + 1);
+      setChartsRefreshKey((k) => k + 1); // trigger tất cả chart refetch
     }, 1200);
   };
 
@@ -118,7 +113,7 @@ function Dashboard() {
         </section>
       )}
 
-      {/* METRICS — refreshKey để tự cập nhật khi có giao dịch mới */}
+      {/* METRICS */}
       <section
         className="opacity-0 animate-fade-up delay-100"
         style={{ animationFillMode: "forwards" }}
@@ -130,7 +125,7 @@ function Dashboard() {
         />
       </section>
 
-      {/* CHARTS ROW */}
+      {/* CHARTS ROW — Donut (1/3) + Trend (2/3) */}
       <section
         className="opacity-0 animate-fade-up delay-200"
         style={{ animationFillMode: "forwards" }}
@@ -143,43 +138,18 @@ function Dashboard() {
           }}
           className="charts-row"
         >
-          {/* Donut — refreshKey tự cập nhật khi tạo giao dịch mới */}
+          {/* Donut Chart — chi tiêu theo danh mục tháng này */}
           <ExpenseDonutChart
             month={filters.month}
             year={filters.year}
             refreshKey={chartsRefreshKey}
           />
 
-          {/* Placeholder TrendChart — Ngày 18 */}
-          <Card
-            variant="subtle"
-            radius="lg"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              minHeight: "220px",
-            }}
-          >
-            <div style={{ textAlign: "center" }}>
-              <p
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: "0.625rem",
-                  fontWeight: 600,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  color: "var(--color-ink-3)",
-                  marginBottom: "0.5rem",
-                }}
-              >
-                Sắp ra mắt
-              </p>
-              <p style={{ fontSize: "0.875rem", color: "var(--color-ink-3)" }}>
-                Biểu đồ xu hướng · Ngày 18
-              </p>
-            </div>
-          </Card>
+          {/* Monthly Trend Chart — xu hướng cả năm */}
+          <MonthlyTrendChart
+            year={filters.year}
+            refreshKey={chartsRefreshKey}
+          />
         </div>
       </section>
 

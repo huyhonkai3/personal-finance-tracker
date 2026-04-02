@@ -448,7 +448,7 @@ function MiniMetricCard({ label, amount, isCount = false, type }) {
 // Props:
 //   month (number): tháng hiện tại
 //   year  (number): năm hiện tại
-function DashboardMetrics({ month, year }) {
+function DashboardMetrics({ month, year, refreshKey = 0 }) {
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -470,7 +470,7 @@ function DashboardMetrics({ month, year }) {
     };
 
     fetch();
-  }, [month, year]);
+  }, [month, year, refreshKey]);
 
   // ---- SKELETON ----
   if (isLoading) return <SkeletonMetrics />;

@@ -1,39 +1,36 @@
 // =============================================
-// pages/Dashboard.jsx — Ngày 16
+// pages/Dashboard.jsx — Ngày 17
 // =============================================
-// Thay thế MOCK_BALANCE / MOCK_INCOME / MOCK_EXPENSE
-// bằng DashboardMetrics component kết nối API thực.
 
 import { useState, useEffect, useCallback } from "react";
 import { Plus, X } from "lucide-react";
 import TransactionForm from "@/components/transactions/TransactionForm";
 import TransactionFilter from "@/components/transactions/TransactionFilter";
 import TransactionTable from "@/components/transactions/TransactionTable";
-import DashboardMetrics from "@/components/dashboard/DashboardMetrics"; // MỚI
+import DashboardMetrics from "@/components/dashboard/DashboardMetrics";
+import ExpenseDonutChart from "@/components/dashboard/ExpenseDonutChart";
 import Card from "@/components/ui/Card";
 import { getTransactions } from "@/api/transactionApi";
 
-// =============================================
-// MAIN DASHBOARD COMPONENT
-// =============================================
 function Dashboard() {
   const now = new Date();
 
-  // ---- Form state ----
   const [showForm, setShowForm] = useState(false);
-
-  // ---- Filter state ----
   const [filters, setFilters] = useState({
     month: now.getMonth() + 1,
     year: now.getFullYear(),
     type: "all",
   });
-
-  // ---- Transaction data ----
   const [transactions, setTransactions] = useState([]);
   const [summary, setSummary] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState(null);
+
+  // refreshKey: tăng lên mỗi khi tạo giao dịch thành công.
+  // DashboardMetrics và ExpenseDonutChart nhận prop này — khi nó thay đổi,
+  // useEffect bên trong chúng tự chạy lại và fetch data mới.
+  // Pattern này sạch hơn việc dùng callback chain hoặc global state.
+  const [chartsRefreshKey, setChartsRefreshKey] = useState(0);
 
   const fetchTransactions = useCallback(async () => {
     setIsLoading(true);
@@ -63,7 +60,9 @@ function Dashboard() {
   const handleTransactionSuccess = () => {
     setTimeout(() => {
       setShowForm(false);
+      // Refresh cả bảng giao dịch lẫn các chart cùng lúc
       fetchTransactions();
+      setChartsRefreshKey((k) => k + 1);
     }, 1200);
   };
 
@@ -75,7 +74,7 @@ function Dashboard() {
 
   return (
     <div className="max-w-3xl mx-auto px-5 md:px-8 py-10 md:py-14 space-y-10">
-      {/* ===== HEADER ===== */}
+      {/* HEADER */}
       <header className="flex items-start justify-between animate-fade-in">
         <div>
           <p className="label-caps mb-2">
@@ -109,7 +108,7 @@ function Dashboard() {
         </button>
       </header>
 
-      {/* ===== FORM ===== */}
+      {/* FORM */}
       {showForm && (
         <section
           className="opacity-0 animate-fade-up"
@@ -119,21 +118,74 @@ function Dashboard() {
         </section>
       )}
 
-      {/* ===== DASHBOARD METRICS (thay thế toàn bộ MOCK hero + stat cards) =====
-        DashboardMetrics tự fetch API getTransactionSummary với month/year.
-        Khi filters thay đổi (user chọn tháng khác ở bảng bên dưới),
-        truyền xuống để Metrics cũng cập nhật theo — dữ liệu đồng bộ.
-      */}
+      {/* METRICS — refreshKey để tự cập nhật khi có giao dịch mới */}
       <section
         className="opacity-0 animate-fade-up delay-100"
         style={{ animationFillMode: "forwards" }}
       >
-        <DashboardMetrics month={filters.month} year={filters.year} />
+        <DashboardMetrics
+          month={filters.month}
+          year={filters.year}
+          refreshKey={chartsRefreshKey}
+        />
       </section>
 
-      {/* ===== TRANSACTION SECTION ===== */}
+      {/* CHARTS ROW */}
       <section
         className="opacity-0 animate-fade-up delay-200"
+        style={{ animationFillMode: "forwards" }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 2fr",
+            gap: "1rem",
+          }}
+          className="charts-row"
+        >
+          {/* Donut — refreshKey tự cập nhật khi tạo giao dịch mới */}
+          <ExpenseDonutChart
+            month={filters.month}
+            year={filters.year}
+            refreshKey={chartsRefreshKey}
+          />
+
+          {/* Placeholder TrendChart — Ngày 18 */}
+          <Card
+            variant="subtle"
+            radius="lg"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: "220px",
+            }}
+          >
+            <div style={{ textAlign: "center" }}>
+              <p
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "0.625rem",
+                  fontWeight: 600,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: "var(--color-ink-3)",
+                  marginBottom: "0.5rem",
+                }}
+              >
+                Sắp ra mắt
+              </p>
+              <p style={{ fontSize: "0.875rem", color: "var(--color-ink-3)" }}>
+                Biểu đồ xu hướng · Ngày 18
+              </p>
+            </div>
+          </Card>
+        </div>
+      </section>
+
+      {/* TRANSACTION TABLE */}
+      <section
+        className="opacity-0 animate-fade-up delay-300"
         style={{ animationFillMode: "forwards" }}
       >
         <Card variant="default" radius="lg" style={{ overflow: "hidden" }}>
@@ -174,7 +226,6 @@ function Dashboard() {
                 {monthLabel}
               </h2>
             </div>
-            {/* TransactionFilter cũng điều khiển tháng/năm của Metrics */}
             <TransactionFilter filters={filters} onFilterChange={setFilters} />
           </div>
 
@@ -203,6 +254,12 @@ function Dashboard() {
           </div>
         </Card>
       </section>
+
+      <style>{`
+        @media (max-width: 640px) {
+          .charts-row { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   );
 }

@@ -18,3 +18,16 @@ export const updateTransaction = (id, data) =>
 // DELETE /api/transactions/:id
 export const deleteTransaction = (id) =>
   axiosClient.delete("/transactions/" + id);
+
+// GET /api/transactions/summary?month=6&year=2025
+// Trả về: { totalIncome, totalExpense, balance, count }
+export const getTransactionSummary = (params = {}) =>
+  axiosClient.get("/transactions/summary", { params });
+
+// GET /api/transactions/category-expense?month=6&year=2025
+export const getExpenseByCategory = (params = {}) =>
+  axiosClient.get("/transactions/category-expense", { params });
+
+// GET /api/transactions/monthly-trend?year=2025
+export const getMonthlyTrend = (params = {}) =>
+  axiosClient.get("/transactions/monthly-trend", { params });
